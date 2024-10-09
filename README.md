@@ -9,3 +9,7 @@ Just started the Vue project and added the wizard-ui/src/components/ChatInterfac
 ### intelligent-oracle.py
 
 Just started working on it, not usable yet.
+
+### docker-compose.yml
+
+Scaffolding of what we need right now. Haven't tested it yet.

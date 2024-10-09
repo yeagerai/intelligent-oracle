@@ -6,16 +6,6 @@ import uuid
 from backend.node.genvm.icontract import IContract
 from backend.node.genvm.equivalence_principle import EquivalencePrinciple
 
-# oracleContractAddress: Unique identifier in GenLayer
-# creator: Address of the user creating the Oracle.
-# title: Name of the prediction market.
-# description: Detailed description.
-# potentialOutcomes: list of 2 or more options
-# rules: Conditions and parameters defining the Oracle.
-# dataSources: URLs, APIs or natural language prompts (“browse bbc”) the Oracle will access.
-# status: Active, Resolved, Error.
-# resolutionWindow: Time window for resolution.
-
 
 class Status(Enum):
     ACTIVE = "Active"
