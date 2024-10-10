@@ -13,3 +13,4 @@ Just started working on it, not usable yet.
 ### docker-compose.yml
 
 Scaffolding of what we need right now. Haven't tested it yet.
+We should add some e2e tests like in the simulator
