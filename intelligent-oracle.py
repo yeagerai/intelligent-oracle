@@ -4,10 +4,11 @@ Temporary solutions:
 * Classes are nested. They should be defined at the top level.
 """
 
-from typing import Any
 from backend.node.genvm.icontract import IContract
 from backend.node.genvm.equivalence_principle import EquivalencePrinciple
 from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
 
 
 class Status(Enum):
@@ -16,35 +17,26 @@ class Status(Enum):
     ERROR = "Error"
 
 
+@dataclass
 class IntelligentOracle:
+    global Status  # needed due to limitation in the simulator imports
+    global datetime  # needed due to limitation in the simulator imports
 
-    from datetime import datetime
+    id: str
+    creator: str
+    title: str
+    description: str
+    potential_outcomes: list[str]
+    rules: list[str]
+    data_sources: list[str]
+    earliest_resolution_date: datetime
+    status: Status
 
-    def __init__(
-        self,
-        id: str,
-        creator: str,
-        title: str,
-        description: str,
-        potential_outcomes: list[str],
-        rules: list[str],
-        data_sources: list[str],
-        earliest_resolution_date: datetime,
-    ):
-        if not isinstance(id, str):
+    def __post_init__(self):
+        if not isinstance(self.id, str):
             raise ValueError("ID must be a string.")
-        if id == "":  # TODO: should we have a predefined schema like uuid?
+        if self.id == "":  # TODO: should we have a predefined schema like uuid?
             raise ValueError("ID cannot be empty.")
-
-        self.id = id
-        self.creator = creator
-        self.title = title
-        self.description = description
-        self.potential_outcomes = potential_outcomes
-        self.rules = rules
-        self.data_sources = data_sources
-        self.status = Status.ACTIVE
-        self.earliest_resolution_date = earliest_resolution_date
 
     def to_dict(self):
         return {
@@ -86,6 +78,7 @@ class IntelligentOracleFactory(IContract):
             rules=[],
             data_sources=[],
             earliest_resolution_date=datetime.now(),
+            status=Status.ACTIVE,
         )
         self.oracles[id] = oracle
 
