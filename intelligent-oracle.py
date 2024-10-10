@@ -17,33 +17,55 @@ class IntelligentOracleFactory(IContract):
 
     async def register(
         self,
+        id: str,
     ) -> None:
         """
         Create a new oracle and register it with the factory.
         """
-        oracle = IntelligentOracleFactory.IntelligentOracle()
-        self.oracles[oracle.id] = oracle
+        from datetime import datetime
 
-    async def get(self, oracle_id: str):
+        if id in self.oracles:
+            raise ValueError(f"Oracle with ID {id} already exists.")
+
+        oracle = IntelligentOracleFactory.IntelligentOracle(  # TODO: Replace with actual values.
+            id=id,
+            creator="",
+            title="",
+            description="",
+            potential_outcomes=[],
+            rules=[],
+            data_sources=[],
+            earliest_resolution_date=datetime.now(),
+        )
+        self.oracles[id] = oracle
+
+    async def get_oracle(self, oracle_id: str):
         """
         Get an oracle by its ID.
         """
         return self.oracles[oracle_id]
 
     class IntelligentOracle:
+
         from datetime import datetime
 
         def __init__(
             self,
+            id: str,
             creator: str,
             title: str,
             description: str,
             potential_outcomes: list[str],
-            rules: Any,
+            rules: list[str],
             data_sources: list[str],
             earliest_resolution_date: datetime,
         ):
-            self.id = uuid.uuid4()
+            if not isinstance(id, str):
+                raise ValueError("ID must be a string.")
+            if id == "":  # TODO: should we have a predefined schema like uuid?
+                raise ValueError("ID cannot be empty.")
+
+            self.id = id
             self.creator = creator
             self.title = title
             self.description = description
@@ -52,6 +74,19 @@ class IntelligentOracleFactory(IContract):
             self.data_sources = data_sources
             self.status = IntelligentOracleFactory.IntelligentOracle.Status.ACTIVE
             self.earliest_resolution_date = earliest_resolution_date
+
+        def __dict__(self):
+            return {
+                "id": self.id,
+                "creator": self.creator,
+                "title": self.title,
+                "description": self.description,
+                "potential_outcomes": self.potential_outcomes,
+                "rules": self.rules,
+                "data_sources": self.data_sources,
+                "status": self.status,
+                "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
+            }
 
         from enum import Enum
 
