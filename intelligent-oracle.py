@@ -39,11 +39,11 @@ class IntelligentOracleFactory(IContract):
         )
         self.oracles[id] = oracle
 
-    async def get_oracle(self, oracle_id: str):
+    def get_oracle(self, oracle_id: str):
         """
         Get an oracle by its ID.
         """
-        return self.oracles[oracle_id]
+        return self.oracles[oracle_id].to_dict()
 
     class IntelligentOracle:
 
@@ -75,7 +75,7 @@ class IntelligentOracleFactory(IContract):
             self.status = IntelligentOracleFactory.IntelligentOracle.Status.ACTIVE
             self.earliest_resolution_date = earliest_resolution_date
 
-        def __dict__(self):
+        def to_dict(self):
             return {
                 "id": self.id,
                 "creator": self.creator,
@@ -84,7 +84,7 @@ class IntelligentOracleFactory(IContract):
                 "potential_outcomes": self.potential_outcomes,
                 "rules": self.rules,
                 "data_sources": self.data_sources,
-                "status": self.status,
+                "status": self.status.value,
                 "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
             }
 
