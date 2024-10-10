@@ -83,18 +83,42 @@ class IntelligentOracle(CheckTypes):
                     f"Data source {data_source} does not match any valid data source pattern."
                 )
 
-    def submit_data_source(self, data_source: str):
+    async def submit_data_source(self, data_source: str):
+        if self.status != Status.ACTIVE:
+            raise ValueError("Cannot submit data source to a non-active oracle.")
 
+        final_result = {}
+        async with EquivalencePrinciple(
+            result=final_result,
+            principle="The output should be the exact same",
+            comparative=True,
+        ) as eq:
+            task = (
+                f"""Verify that the provided data source is valid among the valid data sources. The valid data sources can be in the form of regex, URLs, or natural language.
+
+            Valid data sources: {self.valid_data_sources}
+
+            Data source to verify: {data_source}
+
+            Respond only with True if the data source is valid, False otherwise.
+
+            Do not respond with anything else, the result will be used as a boolean value in Python.
+""",
+            )
+            result = await eq.call_llm(task)
+            eq.set(result)
         self.data_sources.append(data_source)
 
     def resolve(self):
+        if self.status != Status.ACTIVE:
+            raise ValueError("Cannot resolve a non-active oracle.")
         if datetime.now() < self.earliest_resolution_date:
             raise ValueError("Cannot resolve before the earliest resolution date.")
 
         if not self.data_sources:
             raise ValueError("No data sources loaded.")
 
-        # TODO: call llms
+        # TODO: call llms and web scrapers like the example contract PredictionMarket does
         self.status = Status.RESOLVED
 
     def to_dict(self):
@@ -146,8 +170,8 @@ class IntelligentOracleFactory(IContract):
     async def resolve(self, oracle_id: str):
         await self.oracles[oracle_id].resolve()
 
-    def submit_data_source(self, oracle_id: str, data_source: str):
-        self.oracles[oracle_id].submit_data_source(data_source)
+    async def submit_data_source(self, oracle_id: str, data_source: str):
+        await self.oracles[oracle_id].submit_data_source(data_source)
 
     def get_oracle(self, oracle_id: str):
         """
