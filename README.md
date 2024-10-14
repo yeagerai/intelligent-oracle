@@ -10,6 +10,8 @@ Just started the Vue project and added the wizard-ui/src/components/ChatInterfac
 
 Just started working on it, not usable yet.
 
+- `Factory` and `Registry` patterns are missing given limitations in the Simulator.
+
 ### docker-compose.yml
 
 Scaffolding of what we need right now. Haven't tested it yet.

@@ -37,7 +37,7 @@ def test_football_prediction_market_success():
 
     title = "Football Prediction Market"
     description = "A market test"
-    rules = []
+    rules = ["The outcome is the winner of the match"]
     valid_data_sources = ["bbc"]
     potential_outcomes = ["Bayern Munich", "Arsenal"]
     earliest_resolution_date = "2024-01-01T00:00:00+00:00"
@@ -61,8 +61,6 @@ def test_football_prediction_market_success():
     assert has_success_status(transaction_response_deploy)
     assert has_successful_execution(transaction_response_deploy)
 
-    # "https://www.bbc.com/sport/football/scores-fixtures/2024-10-09"
-
     # Get Initial State
     contract_state = call_contract_method(contract_address, account, "get_dict", [])
     assert contract_state == {
@@ -80,78 +78,39 @@ def test_football_prediction_market_success():
         "prediction_market_id": prediction_market_id,
     }
 
-    # # Create Successful Prediction
-    # create_successful_prediction_result = send_transaction(
-    #     account,
-    #     contract_address,
-    #     "create_prediction",
-    #     ["2024-06-20", "Spain", "Italy", "1"],
-    # )
-    # assert has_success_status(create_successful_prediction_result)
-    # assert_dict_struct(
-    #     create_successful_prediction_result,
-    #     execute_icontract_function_response_structure,
-    # )
+    data_source = "https://www.bbc.com/sport/football/scores-fixtures/2024-10-09"
+    # Submit Data Source
 
-    # # Get Predictions
-    # get_prediction_result = call_contract_method(
-    #     contract_address, account, "get_predictions", []
-    # )
-    # print("~ ~ ~ ~ ~ get_prediction_result", get_prediction_result)
-    # assert get_prediction_result == {
-    #     account.address: test_football_prediction_market_predictions_win_unresolved
-    # }
+    submit_data_source_result = send_transaction(
+        account,
+        contract_address,
+        "submit_data_source",
+        [data_source],
+    )
+    assert has_success_status(submit_data_source_result)
+    assert_dict_struct(
+        submit_data_source_result,
+        execute_icontract_function_response_structure,
+    )
 
-    # # Get Player Predictions
-    # get_player_predictions_result = call_contract_method(
-    #     contract_address, account, "get_player_predictions", [account.address]
-    # )
-    # assert (
-    #     get_player_predictions_result
-    #     == test_football_prediction_market_predictions_win_unresolved
-    # )
+    # Check that the data source was added to the list of data sources
+    contract_state = call_contract_method(contract_address, account, "get_dict", [])
+    assert contract_state["data_sources"] == [data_source]
 
-    # # Resolve Successful Prediction
-    # resolve_successful_prediction_result = send_transaction(
-    #     account, contract_address, "resolve_prediction", ["2024-06-20_spain_italy"]
-    # )
-    # assert has_success_status(resolve_successful_prediction_result)
-    # assert_dict_struct(
-    #     resolve_successful_prediction_result,
-    #     execute_icontract_function_response_structure,
-    # )
+    # Resolve the Prediction
+    resolve_prediction_result = send_transaction(
+        account,
+        contract_address,
+        "resolve",
+        [],
+    )
+    assert has_success_status(resolve_prediction_result)
+    assert_dict_struct(
+        resolve_prediction_result, execute_icontract_function_response_structure
+    )
+    assert has_successful_execution(resolve_prediction_result)
 
-    # # Get Predictions
-    # get_prediction_result = call_contract_method(
-    #     contract_address, account, "get_predictions", []
-    # )
-    # assert get_prediction_result == {
-    #     account.address: test_football_prediction_market_predictions_win_resolved
-    # }
-
-    # # Get Player Predictions
-    # get_player_predictions_result = call_contract_method(
-    #     contract_address, account, "get_player_predictions", [account.address]
-    # )
-    # assert (
-    #     get_player_predictions_result
-    #     == test_football_prediction_market_predictions_win_resolved
-    # )
-
-    # # Get Points
-    # get_points_result = call_contract_method(
-    #     contract_address, account, "get_points", []
-    # )
-    # assert get_points_result == {account.address: 1}
-
-    # # Get Player Points
-    # get_player_points_result = call_contract_method(
-    #     contract_address, account, "get_player_points", [account.address]
-    # )
-    # assert get_player_points_result == 1
-
-    # # Delete Validators
-    # delete_validators_result = post_request_localhost(
-    #     payload("sim_deleteAllValidators")
-    # ).json()
-    # assert has_success_status(delete_validators_result)
+    # Check that the outcome was set
+    contract_state = call_contract_method(contract_address, account, "get_dict", [])
+    print(contract_state)
+    assert contract_state["outcome"] == "Bayern Munich"

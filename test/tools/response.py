@@ -29,12 +29,7 @@ def has_success_status(result: dict) -> bool:
 
 
 def has_successful_execution(result: dict) -> bool:
-
-    if result["consensus_data"]["leader_receipt"]["execution_result"] == "SUCCESS":
-        return True
-    else:
-        print(result["consensus_data"]["leader_receipt"])
-        return False
+    return result["consensus_data"]["leader_receipt"]["execution_result"] == "SUCCESS"
 
 
 def has_message(result: dict) -> bool:

@@ -44,6 +44,13 @@ def get_transaction_by_hash(transaction_hash: str):
     return parsed_raw_response["result"]
 
 
+def get_transaction_count(account_address: str):
+    payload_data = payload("eth_getTransactionCount", account_address)
+    raw_response = post_request_localhost(payload_data)
+    parsed_raw_response = raw_response.json()
+    return parsed_raw_response["result"]
+
+
 def call_contract_method(
     contract_address: str,
     from_account: Account,
@@ -77,7 +84,11 @@ def send_transaction(
         if method_name is None and method_args is None
         else [method_name, json.dumps(method_args)]
     )
-    signed_transaction = sign_transaction(account, call_data, contract_address, value)
+    nonce = get_transaction_count(account.address)
+
+    signed_transaction = sign_transaction(
+        account, call_data, contract_address, value, nonce
+    )
     return send_raw_transaction(signed_transaction)
 
 
@@ -85,7 +96,8 @@ def deploy_intelligent_contract(
     account: Account, contract_code: str, constructor_params: str
 ) -> tuple[str, dict]:
     deploy_data = [contract_code, constructor_params]
-    signed_transaction = sign_transaction(account, deploy_data)
+    nonce = get_transaction_count(account.address)
+    signed_transaction = sign_transaction(account, deploy_data, nonce=nonce)
     result = send_raw_transaction(signed_transaction)
     contract_address = result["data"]["contract_address"]
     return contract_address, result

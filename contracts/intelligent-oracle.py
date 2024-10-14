@@ -6,7 +6,10 @@ Temporary solutions:
 
 import json
 from backend.node.genvm.icontract import IContract
-from backend.node.genvm.equivalence_principle import EquivalencePrinciple
+from backend.node.genvm.equivalence_principle import (
+    call_llm_with_principle,
+    get_webpage_with_principle,
+)
 from enum import Enum
 from datetime import datetime
 
@@ -65,13 +68,7 @@ class IntelligentOracle(IContract):
         if data_source in self.data_sources:
             return  # skip duplicates
 
-        final_result = {}
-        async with EquivalencePrinciple(
-            result=final_result,
-            principle="The output should be the exact same",
-            comparative=True,
-        ) as eq:
-            task = f"""Verify that the provided data source:
+        task = f"""Verify that the provided data source:
             - is valid among the valid data sources
             - is not already in the list of current data sources
             
@@ -86,16 +83,19 @@ class IntelligentOracle(IContract):
             Respond only with True if the data source is valid, False otherwise.
 
             Do not respond with anything else, the result will be used as a boolean value in Python."""
-            result = await eq.call_llm(task)
-            eq.set(result)
 
-        if final_result["output"] == "True":
+        result = await call_llm_with_principle(
+            task,
+            "The output should be the exact same",
+        )
+
+        if result == "True":
             self.data_sources.append(data_source)
 
     async def resolve(self):
         if self.status != Status.ACTIVE:
             raise ValueError("Cannot resolve a non-active oracle.")
-        if datetime.now() < self.earliest_resolution_date:
+        if datetime.now().astimezone() < self.earliest_resolution_date:
             raise ValueError("Cannot resolve before the earliest resolution date.")
 
         if not self.data_sources:
@@ -104,16 +104,12 @@ class IntelligentOracle(IContract):
         # Analyze each webpage separately
         analyzed_data_sources_output = []
         for data_source in self.data_sources:
-            final_result = {}
-            async with EquivalencePrinciple(
-                result=final_result,
-                principle="`vote` field must be exactly the same. All other fields must be similar",
-                comparative=True,
-            ) as eq:
-                web_data = await eq.get_webpage(data_source, "text")
-                print(web_data)
+            web_data = await get_webpage_with_principle(
+                data_source, "Web page data should coincide"
+            )
+            print(web_data)
 
-                task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine the correct outcome based on the user-defined rules, the provided webpage HTML content, the resolution date, and the list of potential outcomes.
+            task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine the correct outcome based on the user-defined rules, the provided webpage HTML content, the resolution date, and the list of potential outcomes.
 
 
 ### **Inputs:**
@@ -167,15 +163,15 @@ class IntelligentOracle(IContract):
 Provide your response in **valid JSON** format with the following structure:
 
 ```json
-{
+{{
   "vote": "Chosen outcome from the potential outcomes list or `null` if undetermined",
   "justification": "Your detailed justification here.",
-  "metadata": {
+  "metadata": {{
     "confidenceLevel": "High | Medium | Low",
     "assumptions": "Any assumptions you made during analysis.",
     "additionalSources": ["List of relevant URLs or sources, if any."]
-  }
-}
+  }}
+}}
 ```
 
 ### **Constraints and Considerations:**
@@ -185,22 +181,16 @@ Provide your response in **valid JSON** format with the following structure:
 - **Clarity:** Make sure your justification is easy to understand.
 - **Validity:** Ensure the JSON output is properly formatted and free of errors.
 """
-                result = await eq.call_llm(task)
-                print(result)
-                eq.set(result)
-
-            result_dict = json.loads(final_result["output"])
+            result = await call_llm_with_principle(
+                task,
+                "`vote` field must be exactly the same. All other fields must be similar",
+            )
+            result_dict = _parse_json_dict(result)
             analyzed_data_sources_output.append(result_dict)
 
         # Gather all results to form one final decision
 
-        final_result = {}
-        async with EquivalencePrinciple(
-            result=final_result,
-            principle="`vote` field must be exactly the same. All other fields must be similar",
-            comparative=True,
-        ) as eq:
-            task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine the correct outcome based on processed data from other AI Validators for many data sources. Here are your inputs
+        task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine the correct outcome based on processed data from other AI Validators for many data sources. Here are your inputs
 
 ### **Inputs:**
 
@@ -242,15 +232,15 @@ Provide your response in **valid JSON** format with the following structure:
 Provide your response in **valid JSON** format with the following structure:
 
 ```json
-{
+{{
   "vote": "Chosen outcome from the potential outcomes list or `null` if undetermined",
   "justification": "Your detailed justification here.",
-  "metadata": {
+  "metadata": {{
     "confidenceLevel": "High | Medium | Low",
     "assumptions": "Any assumptions you made during analysis.",
     "additionalSources": ["List of relevant URLs or sources, if any."]
-  }
-}
+  }}
+}}
 ```
 
 ### **Constraints and Considerations:**
@@ -261,11 +251,12 @@ Provide your response in **valid JSON** format with the following structure:
 - **Validity:** Ensure the JSON output is properly formatted and free of errors.
 
 """
-            result = await eq.call_llm(task)
-            print(result)
-            eq.set(result)
 
-        result_dict = json.loads(final_result["output"])
+        result = await call_llm_with_principle(
+            task,
+            "`vote` field must be exactly the same. All other fields must be similar",
+        )
+        result_dict = _parse_json_dict(result)
         self.analysis = result_dict
 
         if (
@@ -296,3 +287,14 @@ Provide your response in **valid JSON** format with the following structure:
 
     def get_status(self) -> str:
         return self.status.value
+
+
+def _parse_json_dict(json_str: str) -> dict:
+    """
+    Used to sanitize the JSON output from the LLM.
+    Remove everything before the first '{' and after the last '}'
+    """
+    first_brace = json_str.find("{")
+    last_brace = json_str.rfind("}")
+    json_str = json_str[first_brace : last_brace + 1]
+    return json.loads(json_str)
