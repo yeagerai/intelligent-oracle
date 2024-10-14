@@ -34,11 +34,8 @@ class IntelligentOracle(IContract):
         valid_data_sources: list[
             str
         ],  # List of regex URL patterns for valid data sources. Users will provide data that matches on these patterns.
-        data_sources: list[
-            str
-        ],  # List of URLs that need to match with one of valid_data_sources
         earliest_resolution_date: (
-            datetime  # Minimum date and time when the oracle can be resolved
+            str  # Minimum date and time when the oracle can be resolved
         ),
     ):
         self.prediction_market_id = prediction_market_id
@@ -48,14 +45,12 @@ class IntelligentOracle(IContract):
         self.potential_outcomes = potential_outcomes
         self.rules = rules
         self.valid_data_sources = valid_data_sources
-        self.earliest_resolution_date = earliest_resolution_date
+        self.earliest_resolution_date = datetime.fromisoformat(earliest_resolution_date)
 
+        self.data_sources: list[str] = []
         self.status = Status.ACTIVE
-
-        if not isinstance(self.id, str):
-            raise ValueError("ID must be a string.")
-        if self.id == "":  # TODO: should we have a predefined schema like uuid?
-            raise ValueError("ID cannot be empty.")
+        self.analysis: dict | None = None
+        self.outcome: str | None = None
 
         if len(self.potential_outcomes) < 2:
             raise ValueError("At least two potential outcomes are required.")
@@ -194,8 +189,8 @@ Provide your response in **valid JSON** format with the following structure:
                 print(result)
                 eq.set(result)
 
-            result_json = json.loads(final_result["output"])
-            analyzed_data_sources_output.append(result_json)
+            result_dict = json.loads(final_result["output"])
+            analyzed_data_sources_output.append(result_dict)
 
         # Gather all results to form one final decision
 
@@ -270,15 +265,21 @@ Provide your response in **valid JSON** format with the following structure:
             print(result)
             eq.set(result)
 
-        result_json = json.loads(final_result["output"])
+        result_dict = json.loads(final_result["output"])
+        self.analysis = result_dict
 
-        # TODO: analyze output and update accordingly
+        if (
+            result_dict["vote"] is None
+            or result_dict["vote"] not in self.potential_outcomes
+        ):
+            self.status = Status.ERROR  # TODO: can we do something else?
+            return
 
+        self.outcome = result_dict["vote"]
         self.status = Status.RESOLVED
 
-    def to_dict(self):
+    def get_dict(self) -> dict[str]:
         return {
-            "id": self.id,
             "creator": self.creator,
             "title": self.title,
             "description": self.description,
@@ -288,4 +289,10 @@ Provide your response in **valid JSON** format with the following structure:
             "data_sources": self.data_sources,
             "status": self.status.value,
             "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
+            "analysis": self.analysis,
+            "outcome": self.outcome,
+            "prediction_market_id": self.prediction_market_id,
         }
+
+    def get_status(self) -> str:
+        return self.status.value
