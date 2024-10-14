@@ -1,5 +1,3 @@
-# tests/e2e/test_wizard_of_coin.py
-
 import json
 from tools.accounts import create_new_account
 from tools.request import (

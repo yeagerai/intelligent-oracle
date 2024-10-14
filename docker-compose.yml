@@ -1,16 +1,12 @@
 services:
 
-  frontend:
+  explorer:
     build: 
-      context: frontend
-      target: dev
-    environment:
-      VITE_API_BASE_URL: http://localhost:8000/
+      context: explorer
     ports:
       - 5173:5173
-      # - 8080:80 # nginx for build-test
     volumes:
-      - ./frontend:/app
+      - ./explorer:/app
 
   # Simulator components
 
