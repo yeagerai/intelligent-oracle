@@ -1,29 +1,14 @@
 """
 Temporary solutions:
-* Imports are done in weird places given current limitations on how imports work in GenVM.
-* Classes are nested. They should be defined at the top level.
+- `global` imports are done in weird places given current limitations on how imports work in GenVM.
+- we don't use a factory since we cannot deploy new contracts from a contract
 """
 
 import json
 from backend.node.genvm.icontract import IContract
 from backend.node.genvm.equivalence_principle import EquivalencePrinciple
 from enum import Enum
-from dataclasses import dataclass
 from datetime import datetime
-import re
-
-
-@dataclass
-class CheckTypes:
-    def __post_init__(self):
-        for name, field_type in self.__annotations__.items():
-            if not isinstance(self.__dict__[name], field_type):
-                current_type = type(self.__dict__[name])
-                raise TypeError(
-                    f"The field `{name}` was assigned by `{current_type}` instead of `{field_type}`"
-                )
-
-        print("Check is passed successfully")
 
 
 class Status(Enum):
@@ -32,32 +17,41 @@ class Status(Enum):
     ERROR = "Error"
 
 
-@dataclass
-class IntelligentOracle(CheckTypes):
+class IntelligentOracle(IContract):
     global Status  # needed due to limitation in the simulator imports
     global datetime  # needed due to limitation in the simulator imports
 
-    id: str
-    prediction_market_id: (
-        str  # Used to communicate back to the prediction market through the bridge
-    )
-    creator: str
-    title: str
-    description: str
-    potential_outcomes: list[str]
-    rules: list[str]
-    valid_data_sources: list[
-        str
-    ]  # List of regex URL patterns for valid data sources. Users will provide data that matches on these patterns.
-    data_sources: list[
-        str
-    ]  # List of URLs that need to match with one of valid_data_sources
-    earliest_resolution_date: (
-        datetime  # Minimum date and time when the oracle can be resolved
-    )
-    status: Status
+    def __init__(
+        self,
+        # TODO # oragle_registry: str, # the registry where this contract will register itself
+        prediction_market_id: (
+            str  # Used to communicate back to the prediction market through the bridge
+        ),
+        title: str,
+        description: str,
+        potential_outcomes: list[str],
+        rules: list[str],
+        valid_data_sources: list[
+            str
+        ],  # List of regex URL patterns for valid data sources. Users will provide data that matches on these patterns.
+        data_sources: list[
+            str
+        ],  # List of URLs that need to match with one of valid_data_sources
+        earliest_resolution_date: (
+            datetime  # Minimum date and time when the oracle can be resolved
+        ),
+    ):
+        self.prediction_market_id = prediction_market_id
+        self.creator = contract_runner.from_address
+        self.title = title
+        self.description = description
+        self.potential_outcomes = potential_outcomes
+        self.rules = rules
+        self.valid_data_sources = valid_data_sources
+        self.earliest_resolution_date = earliest_resolution_date
 
-    def __post_init__(self):
+        self.status = Status.ACTIVE
+
         if not isinstance(self.id, str):
             raise ValueError("ID must be a string.")
         if self.id == "":  # TODO: should we have a predefined schema like uuid?
@@ -69,27 +63,12 @@ class IntelligentOracle(CheckTypes):
         if len(self.potential_outcomes) != len(set(self.potential_outcomes)):
             raise ValueError("Potential outcomes must be unique.")
 
-        for valid_data_source in self.valid_data_sources:
-
-            try:
-                re.compile(valid_data_source)
-            except re.error:
-                raise ValueError(
-                    f"Invalid regex pattern for data source: {valid_data_source}"
-                )
-
-        for data_source in self.data_sources:
-            if not any(
-                re.match(valid_data_source, data_source)
-                for valid_data_source in self.valid_data_sources
-            ):
-                raise ValueError(
-                    f"Data source {data_source} does not match any valid data source pattern."
-                )
-
     async def submit_data_source(self, data_source: str):
         if self.status != Status.ACTIVE:
             raise ValueError("Cannot submit data source to a non-active oracle.")
+
+        if data_source in self.data_sources:
+            return  # skip duplicates
 
         final_result = {}
         async with EquivalencePrinciple(
@@ -310,47 +289,3 @@ Provide your response in **valid JSON** format with the following structure:
             "status": self.status.value,
             "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
         }
-
-
-class IntelligentOracleFactory(IContract):
-
-    def __init__(self):
-        self.oracles: dict[str, IntelligentOracle] = {}
-
-    def register(
-        self,
-        id: str,  # will change to oracleContractAddress in the future
-    ) -> None:
-        """
-        Create a new oracle and register it with the factory.
-        """
-        from datetime import datetime
-
-        if id in self.oracles:
-            raise ValueError(f"Oracle with ID {id} already exists.")
-
-        oracle = IntelligentOracle(  # TODO: Replace with actual values.
-            id=id,
-            creator=contract_runner.from_address,
-            title="",
-            description="",
-            potential_outcomes=[],
-            rules=[],
-            valid_data_sources=[],
-            data_sources=[],
-            earliest_resolution_date=datetime.now(),
-            status=Status.ACTIVE,
-        )
-        self.oracles[id] = oracle
-
-    async def resolve(self, oracle_id: str):
-        await self.oracles[oracle_id].resolve()
-
-    async def submit_data_source(self, oracle_id: str, data_source: str):
-        await self.oracles[oracle_id].submit_data_source(data_source)
-
-    def get_oracle(self, oracle_id: str):
-        """
-        Get an oracle by its ID.
-        """
-        return self.oracles[oracle_id].to_dict()
