@@ -6,24 +6,25 @@ import {
 } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { ref, computed } from "vue";
+import { Address } from "genlayer-js/types";
 
 export const useGenlayerStore = defineStore("genlayer", () => {
   const accountPrivateKey = ref(
     localStorage.getItem("accountPrivateKey") || null
   );
-  const client = computed(() => {
-    return createClient({
+  const client = computed(() =>
+    createClient({
       chain: simulator,
-      account: account.value as any,
+      account: account.value,
       endpoint: import.meta.env.VITE_SIMULATOR_RPC_URL,
-    });
-  });
+    })
+  );
 
   const account = computed(() => {
     if (!accountPrivateKey.value) {
       createAccount();
     }
-    return createGenLayerAccount(accountPrivateKey.value as any); // TODO: why is the Address type needed here?
+    return createGenLayerAccount(accountPrivateKey.value as Address);
   });
 
   function createAccount() {

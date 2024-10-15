@@ -10,7 +10,7 @@
         <!-- Oracle Cards -->
         <router-link
           v-for="oracle in oracles"
-          :key="oracle.id"
+          :key="oracle.address"
           :to="{ name: 'OracleDetails', params: { address: oracle.address } }"
           class="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300"
         >
