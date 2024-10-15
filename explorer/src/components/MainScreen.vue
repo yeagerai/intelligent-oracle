@@ -1,9 +1,13 @@
 <template>
   <div class="min-h-screen bg-gray-100 text-gray-900">
-    <header class="bg-white shadow flex justify-between">
+    <header class="bg-white shadow flex justify-between items-center">
       <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900">Intelligent Oracles</h1>
       </div>
+      <!-- Add refresh button -->
+      <button @click="refreshOracles" class="mr-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+        Refresh Oracles
+      </button>
     </header>
     <main class="mx-auto py-6 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,8 +78,18 @@ const genlayerStore = useGenlayerStore();
 const oracles = ref<Oracle[]>([]);
 
 onMounted(async () => {
-  oracles.value = await genlayerStore.oracles;
+  await loadOracles();
 });
+
+async function loadOracles() {
+  oracles.value = await genlayerStore.oracles;
+}
+
+// Add refresh function
+async function refreshOracles() {
+  await genlayerStore.refreshOracles();
+  await loadOracles();
+}
 
 // Helper function to format date
 const formatDate = (dateString: string) => {

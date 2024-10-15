@@ -61,12 +61,12 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   const _oracles = ref<Oracle[]>([]);
   const oracles = computed(async () => {
     if (_oracles.value.length === 0) {
-      await fetchOracles();
+      await refreshOracles();
     }
     return _oracles.value;
   });
 
-  async function fetchOracles() {
+  async function refreshOracles() {
     const registryContractAddress = import.meta.env
       .VITE_CONTRACT_ADDRESS as Address;
     console.log("registryContractAddress", registryContractAddress);
@@ -78,17 +78,20 @@ export const useGenlayerStore = defineStore("genlayer", () => {
     });
 
     _oracles.value = await Promise.all(
-      contract_addresses.map((address) =>
-        client.value
-          .readContract({
-            account: account.value,
-            address,
-            functionName: "get_dict",
-            args: [],
-          })
-          .then((result) => ({ ...result, address }))
-      )
+      contract_addresses.map((address) => fetchOracle(address))
     );
+  }
+
+  async function fetchOracle(address: Address): Promise<Oracle> {
+    console.log("fetchOracle", address);
+    return await client.value
+      .readContract({
+        account: account.value,
+        address,
+        functionName: "get_dict",
+        args: [],
+      })
+      .then((result) => ({ ...result, address }));
   }
 
   return {
@@ -96,6 +99,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
     client,
     account,
     oracles,
-    fetchOracles,
+    refreshOracles,
+    fetchOracle,
   };
 });

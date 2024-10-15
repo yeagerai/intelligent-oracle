@@ -3,12 +3,18 @@
     <header class="bg-white shadow">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <h1 class="text-3xl font-bold text-gray-900">Oracle Details</h1>
-        <router-link 
-          to="/" 
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Back to Main Screen
-        </router-link>
+        <div class="flex space-x-4">
+          <!-- Add refresh button -->
+          <button @click="refreshOracle" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+            Refresh Oracle
+          </button>
+          <router-link 
+            to="/" 
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Back to Main Screen
+          </router-link>
+        </div>
       </div>
     </header>
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -103,15 +109,24 @@ import { Oracle, useGenlayerStore } from '../stores/genlayerStore';
 
 import Address from './Address.vue';
 import { onMounted, ref } from 'vue';
-
+import { Address as AddressType } from 'genlayer-js/types';
 const route = useRoute();
 const genlayerStore = useGenlayerStore();
 const oracle = ref<Oracle>();
 
 onMounted(async () => {
-  oracle.value = (await genlayerStore.oracles).find(oracle => oracle.address === route.params.address);
+  await loadOracle();
 });
 
+async function loadOracle() {
+  oracle.value = (await genlayerStore.oracles).find(oracle => oracle.address === route.params.address);
+}
+
+// Add refresh function
+async function refreshOracle() {
+  await genlayerStore.fetchOracle(route.params.address as AddressType);
+  await loadOracle();
+}
 
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Not specified';
