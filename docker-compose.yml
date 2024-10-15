@@ -11,6 +11,21 @@ services:
     volumes:
       - ./explorer:/app
     depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.seed
+    volumes:
+      - ./.env:/app/.env
+    environment:
+      RPCPROTOCOL: http
+      RPCHOST: jsonrpc
+      RPCPORT: ${RPCPORT}
+
+    depends_on:
       jsonrpc:
         condition: service_healthy
 

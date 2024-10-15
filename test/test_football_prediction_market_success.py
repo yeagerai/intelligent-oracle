@@ -5,7 +5,7 @@ from tools.request import (
     send_transaction,
     call_contract_method,
     payload,
-    post_request_localhost,
+    post_request,
 )
 from tools.structure import execute_icontract_function_response_structure
 from tools.response import (
@@ -19,14 +19,14 @@ def test_football_prediction_market_success():
     # Account
     account = create_new_account()
     # Validators
-    # result = post_request_localhost(
+    # result = post_request(
     #     payload("sim_createRandomValidators", 5, 8, 12, ["openai"], ["gpt-4o"])
     # ).json()
     # assert has_success_status(result)
 
     # Contract Schema
     contract_code = open("contracts/intelligent-oracle.py", "r").read()
-    result_schema = post_request_localhost(
+    result_schema = post_request(
         payload("gen_getContractSchemaForCode", contract_code)
     ).json()
     assert has_success_status(result_schema)

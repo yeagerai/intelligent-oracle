@@ -1,10 +1,21 @@
+"""
+Seeds the project idempotently with:
+- 1 validator
+- Contracts:
+  - 1 registry
+  - 2 identical football prediction markets
+"""
+
 import json
+import os
+from dotenv import load_dotenv, set_key
+from eth_account._utils.validation import is_valid_address
 from tools.response import has_success_status, has_successful_execution
 from tools.accounts import create_new_account
 from tools.request import (
     deploy_intelligent_contract,
     payload,
-    post_request_localhost,
+    post_request,
     send_transaction,
 )
 
@@ -69,17 +80,29 @@ def create_football_prediction_market(registry_contract_address: str) -> str:
 
 
 if __name__ == "__main__":
+    # Check if VITE_CONTRACT_ADDRESS is already set
+    VITE_CONTRACT_ADDRESS_KEY = "VITE_CONTRACT_ADDRESS"
+    load_dotenv()
+    contract_address = os.getenv(VITE_CONTRACT_ADDRESS_KEY)
+    if contract_address is not None and is_valid_address(contract_address):
+        print(f"Registry already created at {contract_address}")
+        exit(0)
+
+    # Seed
+
     # Validators
-    result = post_request_localhost(payload("sim_deleteAllValidators"))
+    result = post_request(payload("sim_deleteAllValidators"))
     assert has_success_status(result)
 
-    result = post_request_localhost(
+    result = post_request(
         payload("sim_createRandomValidators", 1, 1, 2, ["openai"], ["gpt-4o"])
     ).json()
     assert has_success_status(result)
 
     registry_address = create_registry()
-    for _ in range(2):
+    for i in range(2):
+        print(f"Creating football prediction market {i + 1}")
         create_football_prediction_market(registry_address)
 
     print(f"Registry address: {registry_address}")
+    set_key(".env", "VITE_CONTRACT_ADDRESS", registry_address)

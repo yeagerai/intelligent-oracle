@@ -39,14 +39,14 @@ def post_request_localhost(payload: dict):
 
 def get_transaction_by_hash(transaction_hash: str):
     payload_data = payload("eth_getTransactionByHash", transaction_hash)
-    raw_response = post_request_localhost(payload_data)
+    raw_response = post_request(payload_data)
     parsed_raw_response = raw_response.json()
     return parsed_raw_response["result"]
 
 
 def get_transaction_count(account_address: str):
     payload_data = payload("eth_getTransactionCount", account_address)
-    raw_response = post_request_localhost(payload_data)
+    raw_response = post_request(payload_data)
     parsed_raw_response = raw_response.json()
     return parsed_raw_response["result"]
 
@@ -105,7 +105,7 @@ def deploy_intelligent_contract(
 
 def send_raw_transaction(signed_transaction: str):
     payload_data = payload("eth_sendRawTransaction", signed_transaction)
-    raw_response = post_request_localhost(payload_data)
+    raw_response = post_request(payload_data)
     call_method_response = raw_response.json()
     transaction_hash = call_method_response["result"]
 
