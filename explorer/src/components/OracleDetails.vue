@@ -100,16 +100,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { client } from '../services/genlayer';
+import { useGenlayerStore } from '../stores/genlayerStore';
+import { Address as AddressType } from "genlayer-js/types";
+
 import Address from './Address.vue';
 
 const route = useRoute();
 const oracle = ref(null);
+const { client, account } = useGenlayerStore();
 
 onMounted(async () => {
   const address = route.params.address as string;
   const result = await client.readContract({
-    address,
+    account,
+    address: address as AddressType,
     functionName: "get_dict",
     args: [],
   });
