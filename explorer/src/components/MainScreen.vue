@@ -67,13 +67,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { account, client } from "../services/genlayer";
+import { ref, onMounted } from "vue";
+import {  client } from "../services/genlayer";
+import { Address as AddressType } from "genlayer-js/types";
+
 import Address from "./Address.vue";
 
 interface Oracle {
   title: string;
-  address: string;
+  address: AddressType;
   potential_outcomes: string[];
   rules: string[];
   status: string;
@@ -86,21 +88,19 @@ interface Oracle {
 }
 
 // State
-const contractAddress: string = import.meta.env.VITE_CONTRACT_ADDRESS;
-const userAccount = ref(account);
-const userAddress = computed(() => userAccount.value?.address);
+const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as AddressType;
 const oracles = ref<Oracle[]>([]);
 
 // Load data from the backend
 // TODO: it might be a good idea to use a store for this
 onMounted(async () => {
-  const contract_addresses: string[] = await client.readContract({
+  const contract_addresses: AddressType[] = await client.readContract({
     address: contractAddress,
     functionName: "get_contract_addresses",
     args: [],
   });
   console.log(contract_addresses);
-  oracles.value = await Promise.all(contract_addresses.map((address: string) => client.readContract(
+  oracles.value = await Promise.all(contract_addresses.map((address) => client.readContract(
     {
       address,
       functionName: "get_dict",
