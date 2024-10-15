@@ -16,11 +16,15 @@
             </p>
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500">Potential Outcomes:</h4>
-              <p class="text-sm text-gray-900">{{ oracle.potential_outcomes.join(', ') }}</p>
+              <ul class="list-disc pl-5 text-sm text-gray-900">
+                <li v-for="outcome in oracle.potential_outcomes" :key="outcome">{{ outcome }}</li>
+              </ul>
             </div>
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500">Rules:</h4>
-              <p class="text-sm text-gray-900">{{ oracle.rules.join(', ') }}</p>
+              <ul class="list-disc pl-5 text-sm text-gray-900">
+                <li v-for="rule in oracle.rules" :key="rule">{{ rule }}</li>
+              </ul>
             </div>
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500">Status:</h4>
@@ -31,6 +35,10 @@
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500">Outcome:</h4>
               <p class="text-sm text-gray-900">{{ oracle.outcome || 'Not yet determined' }}</p>
+            </div>
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500">Earliest Resolution Date:</h4>
+              <p class="text-sm text-gray-900">{{ formatDate(oracle.earliest_resolution_date) }}</p>
             </div>
             <div class="mt-4">
               <button
@@ -46,7 +54,6 @@
       </div>
     </main>
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -62,6 +69,7 @@ interface Oracle {
   status: string;
   outcome: string | null;
   creator: string;
+  earliest_resolution_date: string;
 }
 
 // State
@@ -87,9 +95,14 @@ onMounted(async () => {
     }
   ).then((result) => ({ ...result, address }))));
   console.log(oracles.value);
-
 });
 
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Not specified';
+  const date = new Date(dateString);
+  return date.toLocaleString();
+};
 
 // Example of Oracle structure
 // {
