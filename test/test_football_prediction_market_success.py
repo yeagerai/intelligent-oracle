@@ -10,7 +10,6 @@ from tools.request import (
 from tools.structure import execute_icontract_function_response_structure
 from tools.response import (
     assert_dict_struct,
-    assert_dict_exact,
     has_success_status,
     has_successful_execution,
 )

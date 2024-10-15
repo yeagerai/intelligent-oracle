@@ -22,9 +22,9 @@ def payload(function_name: str, *args) -> dict:
 
 def post_request(
     payload: dict,
-    protocol: str = os.environ["RPCPROTOCOL"],
-    host: str = os.environ["RPCHOST"],
-    port: str = os.environ["RPCPORT"],
+    protocol: str = os.environ.get("RPCPROTOCOL"),
+    host: str = os.environ.get("RPCHOST"),
+    port: str = os.environ.get("RPCPORT"),
 ):
     return requests.post(
         protocol + "://" + host + ":" + port + "/api",

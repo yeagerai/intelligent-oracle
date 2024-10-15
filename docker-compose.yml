@@ -5,6 +5,7 @@ services:
       context: explorer
     environment:
       VITE_SIMULATOR_RPC_URL: http://localhost:4000/api
+      VITE_CONTRACT_ADDRESS: ${VITE_CONTRACT_ADDRESS}
     ports:
       - 5173:5173
     volumes:
@@ -52,6 +53,7 @@ services:
       start_period: 1s
     ports:
       - ${RPCPORT}:${RPCPORT}
+    restart: always
 
   database-migration:
     image: yeagerai/simulator-database-migration:v0.14.0-test001

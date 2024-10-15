@@ -11,6 +11,6 @@
   </Suspense>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import PredictionMarketScreen from "./components/PredictionMarketScreen.vue";
 </script>
