@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100 text-gray-900">
     <header class="bg-white shadow flex justify-between">
       <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900">GenLayer Football Prediction Market</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Intelligent Oracles</h1>
       </div>
       <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8 text-right">
         <div v-if="!userAddress">
@@ -20,13 +20,11 @@
       </div>
     </header>
     <main class="mx-auto py-6 sm:px-6 lg:px-8">
-      <!-- Account Section -->
-
       <div class="grid grid-cols-1 md:grid-cols-10 gap-8">
         <!-- Predictions List -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg col-span-7">
           <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h2 class="text-lg leading-6 font-medium text-gray-900">Predictions</h2>
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Oracles</h2>
             <button
               @click="openCreateModal"
               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
@@ -89,37 +87,37 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="prediction in predictions" :key="prediction.id">
+                <tr v-for="oracle in oracles" :key="oracle.id">
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <Address :address="prediction.owner" />
+                    <Address :address="oracle.address" />
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ prediction.game_date }}
+                    {{ oracle.game_date }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ prediction.team1 }}
+                    {{ oracle.team1 }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ prediction.team2 }}
+                    {{ oracle.team2 }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ prediction.predicted_winner === "0" ? "Draw" : (prediction.predicted_winner === "1" ? prediction.team1 : prediction.team2) }}
+                    {{ oracle.predicted_winner === "0" ? "Draw" : (oracle.predicted_winner === "1" ? oracle.team1 : oracle.team2) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span :class="prediction.has_resolved ? 'text-green-600' : 'text-yellow-600'">
-                      {{ prediction.has_resolved ? "Resolved" : "Unresolved" }}
+                    <span :class="oracle.has_resolved ? 'text-green-600' : 'text-yellow-600'">
+                      {{ oracle.has_resolved ? "Resolved" : "Unresolved" }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span v-if="prediction.has_resolved" :class="prediction.predicted_winner === String(prediction.real_winner) ? 'text-green-600' : 'text-red-600'">
-                      {{ prediction.predicted_winner === String(prediction.real_winner) ? "Success" : "Failure" }}
+                    <span v-if="oracle.has_resolved" :class="oracle.predicted_winner === String(oracle.real_winner) ? 'text-green-600' : 'text-red-600'">
+                      {{ oracle.predicted_winner === String(oracle.real_winner) ? "Success" : "Failure" }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div v-if="resolvingPrediction !== prediction.id">
+                    <div v-if="resolvingPrediction !== oracle.id">
                       <button
-                        v-if="prediction.owner === userAddress && !prediction.has_resolved"
-                        @click="resolvePrediction(prediction.id)"
+                        v-if="oracle.owner === userAddress && !oracle.has_resolved"
+                        @click="resolvePrediction(oracle.id)"
                         class="text-indigo-600 hover:text-indigo-900"
                       >
                         Resolve
@@ -136,7 +134,7 @@
         <!-- Leaderboard -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg col-span-3">
           <div class="px-4 py-5 sm:px-6">
-            <h2 class="text-lg leading-6 font-medium text-gray-900">Leaderboard</h2>
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Detail</h2>
           </div>
           <div class="border-t border-gray-200">
             <table class="min-w-full divide-y divide-gray-200">
@@ -239,72 +237,53 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { account, createAccount } from "../services/genlayer";
-import PredictionMarket from "../logic/PredictionMarket";
+import { account, createAccount, client } from "../services/genlayer";
 import Address from "./Address.vue";
 // State
-const gameDate = ref("");
-const team1 = ref("");
-const team2 = ref("");
-const creatingPrediction = ref(false);
-const resolvingPrediction = ref(0);
-const predictedWinner = ref("");
 const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
-const predictionMarket = new PredictionMarket(contractAddress, account);
 const userAccount = ref(account);
-const userPoints = ref(0);
 const userAddress = computed(() => userAccount.value?.address);
-const predictions = ref([]);
+const oracles = ref([]);
 const leaderboard = ref([]);
-const showCreateModal = ref(false);
-
-// Methods
-const createUserAccount = async () => {
-  userAccount.value = createAccount();
-  predictionMarket.updateAccount(userAccount.value);  
-  userPoints.value = 0;
-};
-
-const openCreateModal = () => {
-  showCreateModal.value = true;
-};
-
-const loadPredictions = async () => {
-  const allPredictions = await predictionMarket.getPredictions();
-  predictions.value = allPredictions;
-};
-
-const loadLeaderboard = async () => {
-  leaderboard.value = await predictionMarket.getLeaderboard();
-};
-
-const createPrediction = async () => {
-  if (gameDate.value && team1.value && team2.value && predictedWinner.value) {
-    creatingPrediction.value = true;
-    await predictionMarket.createPrediction(gameDate.value, team1.value, team2.value, predictedWinner.value);
-    await loadPredictions();
-    // Reset form fields
-    creatingPrediction.value = false;
-    gameDate.value = "";
-    team1.value = "";
-    team2.value = "";
-    predictedWinner.value = "";
-    showCreateModal.value = false;
-  }
-};
-
-const resolvePrediction = async (predictionId) => {
-  resolvingPrediction.value = predictionId;
-  await predictionMarket.resolvePrediction(predictionId);
-  resolvingPrediction.value = 0;
-  await loadPredictions();
-  await loadLeaderboard();
-};
 
 
-// Initialize with some sample data
+// Load data from the backend
+// TODO: it might be a good idea to use a store for this
 onMounted(async () => {
-  await loadPredictions();
-  await loadLeaderboard();
+  const contract_addresses = await client.readContract({
+    address: contractAddress,
+    functionName: "get_contract_addresses",
+    args: [],
+  });
+  console.log(contract_addresses);
+  oracles.value = await Promise.all(contract_addresses.map((address) => client.readContract(
+    {
+      address,
+      functionName: "get_dict",
+      args: [],
+    }
+  ).then(result => ({ ...result, address }))));
+  console.log(oracles.value);
+//   {
+//   "analysis": null,
+//   "creator": "0x8082FBFD1dBa92be0523a1FC0BfDf2116fD4e399",
+//   "data_sources": [],
+//   "description": "A market test",
+//   "earliest_resolution_date": "2024-01-01T00:00:00+00:00",
+//   "outcome": null,
+//   "potential_outcomes": [
+//     "Bayern Munich",
+//     "Arsenal"
+//   ],
+//   "prediction_market_id": "1",
+//   "rules": [
+//     "The outcome is the winner of the match"
+//   ],
+//   "status": "Active",
+//   "title": "Football Prediction Market",
+//   "valid_data_sources": [
+//     "bbc"
+//   ]
+// }
 });
 </script>
