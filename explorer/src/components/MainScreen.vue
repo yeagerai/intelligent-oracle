@@ -25,12 +25,6 @@
         <div class="bg-white shadow overflow-hidden sm:rounded-lg col-span-7">
           <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
             <h2 class="text-lg leading-6 font-medium text-gray-900">Oracles</h2>
-            <button
-              @click="openCreateModal"
-              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-            >
-              Create Prediction
-            </button>
           </div>
           <div class="border-t border-gray-200">
             <table class="min-w-full divide-y divide-gray-200">
@@ -40,19 +34,19 @@
                     scope="col"
                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    User
+                    Address
                   </th>
                   <th
                     scope="col"
                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Game Date
+                    Title
                   </th>
                   <th
                     scope="col"
                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Team 1
+                    Potential Outcomes
                   </th>
                   <th
                     scope="col"
@@ -92,16 +86,16 @@
                     <Address :address="oracle.address" />
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ oracle.game_date }}
+                    {{ oracle.title }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.team1 }}
+                    {{ oracle.potential_outcomes }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.team2 }}
+                    {{ oracle.rules }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.predicted_winner === "0" ? "Draw" : (oracle.predicted_winner === "1" ? oracle.team1 : oracle.team2) }}
+                    {{ oracle.outcome }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span :class="oracle.has_resolved ? 'text-green-600' : 'text-yellow-600'">
@@ -174,59 +168,7 @@
         </div>
       </div>
 
-      <!-- Create Prediction Modal -->
-      <div
-        v-if="showCreateModal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center"
-      >
-        <div class="relative p-5 border w-96 shadow-lg rounded-md bg-white">
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Create Prediction</h3>
-          <input
-            v-model="gameDate"
-            type="date"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
-            placeholder="Game Date (YYYY-MM-DD)"
-          />
-          <input
-            v-model="team1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
-            placeholder="Team 1"
-          />
-          <input
-            v-model="team2"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
-            placeholder="Team 2"
-          />
-          <select
-            v-model="predictedWinner"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-2"
-          >
-            <option value="" disabled selected>Select Predicted Winner</option>
-            <option value="0">Draw</option>
-            <option value="1">Team 1</option>
-            <option value="2">Team 2</option>
-          </select>
-          <div class="mt-4">
-            <div v-if="!creatingPrediction">
-              <button
-                @click="createPrediction"
-                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-              >
-                Create
-              </button>
-              <button
-                @click="showCreateModal = false"
-                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-            <div v-else>
-              <div class="spinner">Creating...</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
     </main>
   </div>
 
