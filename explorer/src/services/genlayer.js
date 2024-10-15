@@ -12,4 +12,4 @@ export const createAccount = () => {
   return createGenLayerAccount(newAccountPrivateKey);
 };
 
-export const client = createClient({ chain: simulator, account });
+export const client = createClient({ chain: simulator, account, endpoint: import.meta.env.VITE_SIMULATOR_RPC_URL });

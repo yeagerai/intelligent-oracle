@@ -3,10 +3,15 @@ services:
   explorer:
     build: 
       context: explorer
+    environment:
+      VITE_SIMULATOR_RPC_URL: http://localhost:4000/api
     ports:
       - 5173:5173
     volumes:
       - ./explorer:/app
+    depends_on:
+      jsonrpc:
+        condition: service_healthy
 
   # Simulator components
 
@@ -30,17 +35,23 @@ services:
     image: yeagerai/simulator-jsonrpc:v0.14.0-test001
     volumes:
       - ./.env.simulator:/app/.env
+      - ./jsonrpc/healthcheck.py:/healthcheck.py
     environment:
-      FLASK_SERVER_PORT: 4000
+      FLASK_SERVER_PORT: ${RPCPORT}
+      # DISABLE_INFO_LOGS_ENDPOINTS: '["get_transaction_by_id","get_contract_schema_for_code","get_contract_schema", "ping"]'
+      DISABLE_INFO_LOGS_ENDPOINTS: '["ping"]'
+      OPENAIKEY: ${OPENAIKEY}
     depends_on:
       database-migration:
         condition: service_completed_successfully
-    healthcheck: # TODO: Add a real healthcheck. This just waits 10 seconds
-      test: exit 0
-      interval: 10s
+    healthcheck:
+      test: python /healthcheck.py --port ${RPCPORT}
+      interval: 1s
       timeout: 1s
-      retries: 1
-      start_period: 10s
+      retries: 15
+      start_period: 1s
+    ports:
+      - ${RPCPORT}:${RPCPORT}
 
   database-migration:
     image: yeagerai/simulator-database-migration:v0.14.0-test001

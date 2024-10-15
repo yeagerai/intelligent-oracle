@@ -102,6 +102,7 @@ def test_football_prediction_market_success():
         "resolve",
         [],
     )
+    print(resolve_prediction_result)
     assert has_success_status(resolve_prediction_result)
     assert_dict_struct(
         resolve_prediction_result, execute_icontract_function_response_structure

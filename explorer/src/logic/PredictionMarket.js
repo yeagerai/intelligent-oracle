@@ -7,12 +7,12 @@ class PredictionMarket {
 
   constructor(contractAddress, account = null) {
     this.contractAddress = contractAddress;
-    const config = { chain: simulator, ...(account ? { account } : {}) };
+    const config = { chain: simulator, ...(account ? { account } : {}), endpoint: import.meta.env.VITE_SIMULATOR_RPC_URL };
     this.client = createClient(config);
   }
 
   updateAccount(account) {
-    this.client = createClient({ chain: simulator, account });
+    this.client = createClient({ chain: simulator, account, endpoint: import.meta.env.VITE_SIMULATOR_RPC_URL });
   }
 
   async getPredictions() {
