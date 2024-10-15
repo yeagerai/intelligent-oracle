@@ -15,166 +15,51 @@
         </div>
         <div v-else>
           <p class="text-lg">Your address: <Address :address="userAddress" /></p>
-          <p class="text-lg">Your points: {{ userPoints }}</p>
         </div>
       </div>
     </header>
     <main class="mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-10 gap-8">
-        <!-- Predictions List -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg col-span-7">
-          <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
-            <h2 class="text-lg leading-6 font-medium text-gray-900">Oracles</h2>
-          </div>
-          <div class="border-t border-gray-200">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Address
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Title
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Potential Outcomes
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Team 2
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Predicted Winner
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Result
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="oracle in oracles" :key="oracle.id">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <Address :address="oracle.address" />
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ oracle.title }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.potential_outcomes }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.rules }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ oracle.outcome }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span :class="oracle.has_resolved ? 'text-green-600' : 'text-yellow-600'">
-                      {{ oracle.has_resolved ? "Resolved" : "Unresolved" }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span v-if="oracle.has_resolved" :class="oracle.predicted_winner === String(oracle.real_winner) ? 'text-green-600' : 'text-red-600'">
-                      {{ oracle.predicted_winner === String(oracle.real_winner) ? "Success" : "Failure" }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div v-if="resolvingPrediction !== oracle.id">
-                      <button
-                        v-if="oracle.owner === userAddress && !oracle.has_resolved"
-                        @click="resolvePrediction(oracle.id)"
-                        class="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Resolve
-                      </button>
-                    </div>
-                    <div v-else>Resolving prediction</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Leaderboard -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg col-span-3">
-          <div class="px-4 py-5 sm:px-6">
-            <h2 class="text-lg leading-6 font-medium text-gray-900">Detail</h2>
-          </div>
-          <div class="border-t border-gray-200">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Rank
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Address
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Points
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="(user, index) in leaderboard" :key="user.address">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ index + 1 }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <Address :address="user.address" />
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.points }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Oracle Cards -->
+        <div v-for="oracle in oracles" :key="oracle.id" class="bg-white shadow rounded-lg overflow-hidden">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">{{ oracle.title }}</h3>
+            <p class="text-sm text-gray-500 mb-4">
+              <Address :address="oracle.address" />
+            </p>
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500">Potential Outcomes:</h4>
+              <p class="text-sm text-gray-900">{{ oracle.potential_outcomes.join(', ') }}</p>
+            </div>
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500">Rules:</h4>
+              <p class="text-sm text-gray-900">{{ oracle.rules.join(', ') }}</p>
+            </div>
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500">Status:</h4>
+              <span :class="oracle.status === 'Active' ? 'text-green-600' : 'text-yellow-600'">
+                {{ oracle.status }}
+              </span>
+            </div>
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-500">Outcome:</h4>
+              <p class="text-sm text-gray-900">{{ oracle.outcome || 'Not yet determined' }}</p>
+            </div>
+            <div class="mt-4">
+              <button
+                v-if="oracle.creator === userAddress && oracle.status === 'Active'"
+                @click="resolvePrediction(oracle.id)"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Resolve
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      
     </main>
   </div>
 
-  <div class="flex items-center justify-center h-screen">
-    <div class="spinner">Loading...</div>
-  </div>
 </template>
 
 <script setup>
@@ -206,6 +91,11 @@ onMounted(async () => {
     }
   ).then(result => ({ ...result, address }))));
   console.log(oracles.value);
+
+  // Clone the oracles value 5 times for testing purposes
+  oracles.value = Array(5).fill().map(() => [...oracles.value]).flat();
+  console.log("Cloned oracles:", oracles.value);
+});
 //   {
 //   "analysis": null,
 //   "creator": "0x8082FBFD1dBa92be0523a1FC0BfDf2116fD4e399",
@@ -227,5 +117,4 @@ onMounted(async () => {
 //     "bbc"
 //   ]
 // }
-});
 </script>
