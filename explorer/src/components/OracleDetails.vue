@@ -98,27 +98,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { useGenlayerStore } from '../stores/genlayerStore';
-import { Address as AddressType } from "genlayer-js/types";
+import { Oracle, useGenlayerStore } from '../stores/genlayerStore';
 
 import Address from './Address.vue';
+import { onMounted, ref } from 'vue';
 
 const route = useRoute();
-const oracle = ref(null);
-const { client, account } = useGenlayerStore();
+const genlayerStore = useGenlayerStore();
+const oracle = ref<Oracle>();
 
 onMounted(async () => {
-  const address = route.params.address as string;
-  const result = await client.readContract({
-    account,
-    address: address as AddressType,
-    functionName: "get_dict",
-    args: [],
-  });
-  oracle.value = { ...result, address };
+  oracle.value = (await genlayerStore.oracles).find(oracle => oracle.address === route.params.address);
 });
+
 
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Not specified';
