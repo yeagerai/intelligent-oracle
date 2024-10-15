@@ -4,19 +4,6 @@
       <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900">Intelligent Oracles</h1>
       </div>
-      <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8 text-right">
-        <div v-if="!userAddress">
-          <button
-            @click="createUserAccount"
-            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Create Account
-          </button>
-        </div>
-        <div v-else>
-          <p class="text-lg">Your address: <Address :address="userAddress" /></p>
-        </div>
-      </div>
     </header>
     <main class="mx-auto py-6 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -62,41 +49,50 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { account, createAccount, client } from "../services/genlayer";
+import { account, client } from "../services/genlayer";
 import Address from "./Address.vue";
+
+interface Oracle {
+  title: string;
+  address: string;
+  potential_outcomes: string[];
+  rules: string[];
+  status: string;
+  outcome: string | null;
+  creator: string;
+}
+
 // State
-const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
+const contractAddress: string = import.meta.env.VITE_CONTRACT_ADDRESS;
 const userAccount = ref(account);
 const userAddress = computed(() => userAccount.value?.address);
-const oracles = ref([]);
-const leaderboard = ref([]);
-
+const oracles = ref<Oracle[]>([]);
 
 // Load data from the backend
 // TODO: it might be a good idea to use a store for this
 onMounted(async () => {
-  const contract_addresses = await client.readContract({
+  const contract_addresses: string[] = await client.readContract({
     address: contractAddress,
     functionName: "get_contract_addresses",
     args: [],
   });
   console.log(contract_addresses);
-  oracles.value = await Promise.all(contract_addresses.map((address) => client.readContract(
+  oracles.value = await Promise.all(contract_addresses.map((address: string) => client.readContract(
     {
       address,
       functionName: "get_dict",
       args: [],
     }
-  ).then(result => ({ ...result, address }))));
+  ).then((result) => ({ ...result, address }))));
   console.log(oracles.value);
 
-  // Clone the oracles value 5 times for testing purposes
-  oracles.value = Array(5).fill().map(() => [...oracles.value]).flat();
-  console.log("Cloned oracles:", oracles.value);
 });
-//   {
+
+
+// Example of Oracle structure
+// {
 //   "analysis": null,
 //   "creator": "0x8082FBFD1dBa92be0523a1FC0BfDf2116fD4e399",
 //   "data_sources": [],
