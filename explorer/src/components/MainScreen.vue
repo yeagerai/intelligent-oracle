@@ -8,24 +8,17 @@
     <main class="mx-auto py-6 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <!-- Oracle Cards -->
-        <div v-for="oracle in oracles" :key="oracle.id" class="bg-white shadow rounded-lg overflow-hidden">
+        <router-link
+          v-for="oracle in oracles"
+          :key="oracle.id"
+          :to="{ name: 'OracleDetails', params: { address: oracle.address } }"
+          class="bg-white shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300"
+        >
           <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">{{ oracle.title }}</h3>
             <p class="text-sm text-gray-500 mb-4">
               <Address :address="oracle.address" />
             </p>
-            <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-500">Potential Outcomes:</h4>
-              <ul class="list-disc pl-5 text-sm text-gray-900">
-                <li v-for="outcome in oracle.potential_outcomes" :key="outcome">{{ outcome }}</li>
-              </ul>
-            </div>
-            <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-500">Rules:</h4>
-              <ul class="list-disc pl-5 text-sm text-gray-900">
-                <li v-for="rule in oracle.rules" :key="rule">{{ rule }}</li>
-              </ul>
-            </div>
             <div class="mb-4">
               <h4 class="text-sm font-medium text-gray-500">Status:</h4>
               <span :class="oracle.status === 'Active' ? 'text-green-600' : 'text-yellow-600'">
@@ -36,21 +29,8 @@
               <h4 class="text-sm font-medium text-gray-500">Outcome:</h4>
               <p class="text-sm text-gray-900">{{ oracle.outcome || 'Not yet determined' }}</p>
             </div>
-            <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-500">Earliest Resolution Date:</h4>
-              <p class="text-sm text-gray-900">{{ formatDate(oracle.earliest_resolution_date) }}</p>
-            </div>
-            <div class="mt-4">
-              <button
-                v-if="oracle.creator === userAddress && oracle.status === 'Active'"
-                @click="resolvePrediction(oracle.id)"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Resolve
-              </button>
-            </div>
           </div>
-        </div>
+        </router-link>
       </div>
     </main>
   </div>
