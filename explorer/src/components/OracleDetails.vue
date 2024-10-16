@@ -102,7 +102,7 @@
           </div>
           <div class="border-t border-gray-200">
             <ul class="divide-y divide-gray-200">
-              <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4">
+              <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4 cursor-pointer hover:bg-gray-50" @click="openModal(tx)">
                 <div class="flex items-center justify-between">
                   <p class="text-sm font-medium text-indigo-600 truncate">
                     {{ tx.hash }}
@@ -137,6 +137,26 @@
         <p class="text-xl text-gray-600">Loading oracle details...</p>
       </div>
     </main>
+
+    <!-- Transaction Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeModal">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" @click.stop>
+        <div class="mt-3 text-center">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Transaction Details</h3>
+          <div class="mt-2 px-7 py-3">
+            <pre class="text-left whitespace-pre-wrap break-words">{{ prettyJson }}</pre>
+          </div>
+          <div class="items-center px-4 py-3">
+            <button
+              @click="closeModal"
+              class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -145,8 +165,9 @@ import { useRoute } from 'vue-router';
 import { Oracle, useGenlayerStore } from '../stores/genlayerStore';
 
 import Address from './Address.vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { Address as AddressType } from 'genlayer-js/types';
+
 const route = useRoute();
 const genlayerStore = useGenlayerStore();
 const oracle = ref<Oracle>();
@@ -212,7 +233,8 @@ interface Transaction {
 }
 
 const transactions = ref<Transaction[]>([]);
-
+const showModal = ref(false);
+const selectedTransaction = ref<Transaction | null>(null);
 
 onMounted(async () => {
   await loadOracle();
@@ -240,4 +262,26 @@ const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleString();
 };
+
+function openModal(tx: Transaction) {
+  selectedTransaction.value = tx;
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedTransaction.value = null;
+}
+
+const prettyJson = computed(() => {
+  if (!selectedTransaction.value) return '';
+  return JSON.stringify(selectedTransaction.value, null, 2);
+});
 </script>
+
+<style scoped>
+pre {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+</style>
