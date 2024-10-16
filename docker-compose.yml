@@ -36,7 +36,7 @@ services:
     volumes:
       - .simulator-postgres:/var/lib/postgresql/data
     ports:
-      - 5433:5432
+      - 5432:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -48,7 +48,7 @@ services:
       retries: 3
 
   jsonrpc:
-    image: yeagerai/simulator-jsonrpc:v0.16.0-test000
+    image: yeagerai/simulator-jsonrpc:v0.16.0-test000 # TODO: migrate to "production" tag
     volumes:
       - ./.env.simulator:/app/.env
       - ./jsonrpc/healthcheck.py:/healthcheck.py
@@ -66,7 +66,7 @@ services:
     restart: always
 
   database-migration:
-    image: yeagerai/simulator-database-migration:v0.16.0-test000
+    image: yeagerai/simulator-database-migration:v0.16.0-test000 # TODO: migrate to "production" tag
     environment:
       - DB_URL=postgresql://postgres:postgres@postgres/genlayer_state
     volumes:

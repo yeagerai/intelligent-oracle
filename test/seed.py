@@ -21,9 +21,11 @@ from tools.request import (
 )
 
 
+account = create_new_account()
+
+
 def create_registry() -> str:
     contract_code = open("contracts/registry.py", "r").read()
-    account = create_new_account()
 
     contract_address, transaction_response_deploy = deploy_intelligent_contract(
         account,
@@ -40,7 +42,6 @@ def create_football_prediction_market(
     registry_contract_address: str, data_source: str
 ) -> str:
     contract_code = open("contracts/intelligent-oracle.py", "r").read()
-    account = create_new_account()
 
     title = "Football Prediction Market"
     description = "A market test"
