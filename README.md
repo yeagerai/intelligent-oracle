@@ -33,7 +33,6 @@ Simple display working
 
 TODO:
 
-- show transaction lists
 - add appeals (currently blocked by the simulator)
 - allow submitting data sources
   - this feature might not make it to the final version, but it's great to tinker around
