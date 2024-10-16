@@ -114,7 +114,7 @@ if __name__ == "__main__":
     assert has_success_status(result)
 
     result = post_request(
-        payload("sim_createRandomValidators", 1, 1, 2, ["openai"], ["gpt-4o"])
+        payload("sim_createRandomValidators", 2, 1, 2, ["openai"], ["gpt-4o"])
     ).json()
     assert has_success_status(result)
 
