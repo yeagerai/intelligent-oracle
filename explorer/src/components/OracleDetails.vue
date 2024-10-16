@@ -103,7 +103,6 @@
           <div class="border-t border-gray-200">
             <ul class="divide-y divide-gray-200">
               <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4">
-                tx: {{ tx }}
                 <div class="flex items-center justify-between">
                   <p class="text-sm font-medium text-indigo-600 truncate">
                     {{ tx.hash }}
@@ -152,9 +151,66 @@ const route = useRoute();
 const genlayerStore = useGenlayerStore();
 const oracle = ref<Oracle>();
 
-// TODO: type transactions
-// TODO: why are transactions not showing up? did I miss something when setting up the contracts? In theory, all contracts should have one transaction, which is the one that was used to submit the data source
-const transactions = ref<any[]>([]);
+interface Transaction {
+  client_session_id: string | null;
+  consensus_data: {
+    final: boolean;
+    leader_receipt: {
+      args: string[][];
+      class_name: string;
+      contract_state: string;
+      eq_outputs: {
+        leader: {
+          [key: string]: string;
+        };
+      };
+      error: string | null;
+      execution_result: string;
+      gas_used: number;
+      method: string;
+      mode: string;
+      node_config: {
+        address: string;
+        config: Record<string, unknown>;
+        model: string;
+        plugin: string;
+        plugin_config: {
+          api_key_env_var: string;
+          api_url: string | null;
+        };
+        provider: string;
+        stake: number;
+      };
+      vote: string;
+    };
+    validators: any[];
+    votes: {
+      [key: string]: string;
+    };
+  };
+  created_at: string;
+  data: {
+    function_args: string;
+    function_name: string;
+  };
+  from_address: string;
+  gaslimit: number;
+  hash: string;
+  leader_only: boolean;
+  nonce: number;
+  r: string | null;
+  s: string | null;
+  status: string;
+  to_address: string;
+  triggered_by: string | null;
+  triggered_transactions: any[];
+  type: number;
+  v: string | null;
+  value: number;
+}
+
+const transactions = ref<Transaction[]>([]);
+
 
 onMounted(async () => {
   await loadOracle();

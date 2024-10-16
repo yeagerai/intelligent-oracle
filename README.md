@@ -44,6 +44,10 @@ TODO:
 
 - automate the creation of validators with https://github.com/yeagerai/genlayer-simulator/issues/567
 
+### Common pitfalls
+
+The envvar `VITE_CONTRACT_ADDRESS` is set at start time, and it's not dynamically updated. You will need to restart the explorer container to update it.
+
 ### Spin up
 
 In a separate terminal run
