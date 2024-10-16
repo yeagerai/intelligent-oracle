@@ -103,6 +103,7 @@
           <div class="border-t border-gray-200">
             <ul class="divide-y divide-gray-200">
               <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4">
+                tx: {{ tx }}
                 <div class="flex items-center justify-between">
                   <p class="text-sm font-medium text-indigo-600 truncate">
                     {{ tx.hash }}
@@ -151,6 +152,8 @@ const route = useRoute();
 const genlayerStore = useGenlayerStore();
 const oracle = ref<Oracle>();
 
+// TODO: type transactions
+// TODO: why are transactions not showing up? did I miss something when setting up the contracts? In theory, all contracts should have one transaction, which is the one that was used to submit the data source
 const transactions = ref<any[]>([]);
 
 onMounted(async () => {
