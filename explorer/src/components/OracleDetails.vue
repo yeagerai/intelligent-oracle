@@ -146,7 +146,13 @@
           <div class="mt-2 px-7 py-3">
             <pre class="text-left whitespace-pre-wrap break-words">{{ prettyJson }}</pre>
           </div>
-          <div class="items-center px-4 py-3">
+          <div class="items-center px-4 py-3 space-y-2">
+            <button
+              @click="copyToClipboard"
+              class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300"
+            >
+              Copy to Clipboard
+            </button>
             <button
               @click="closeModal"
               class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -277,6 +283,19 @@ const prettyJson = computed(() => {
   if (!selectedTransaction.value) return '';
   return JSON.stringify(selectedTransaction.value, null, 2);
 });
+
+function copyToClipboard() {
+  if (selectedTransaction.value) {
+    navigator.clipboard.writeText(JSON.stringify(selectedTransaction.value, null, 2))
+      .then(() => {
+        alert('Transaction data copied to clipboard!');
+      })
+      .catch((err) => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy transaction data. Please try again.');
+      });
+  }
+}
 </script>
 
 <style scoped>
