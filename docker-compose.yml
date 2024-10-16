@@ -48,7 +48,7 @@ services:
       retries: 3
 
   jsonrpc:
-    image: yeagerai/simulator-jsonrpc:v0.14.0-test001
+    image: yeagerai/simulator-jsonrpc:v0.16.0-test000
     volumes:
       - ./.env.simulator:/app/.env
       - ./jsonrpc/healthcheck.py:/healthcheck.py
@@ -60,18 +60,13 @@ services:
     depends_on:
       database-migration:
         condition: service_completed_successfully
-    healthcheck:
-      test: python /healthcheck.py --port ${RPCPORT}
-      interval: 1s
-      timeout: 1s
-      retries: 15
-      start_period: 1s
+
     ports:
       - ${RPCPORT}:${RPCPORT}
     restart: always
 
   database-migration:
-    image: yeagerai/simulator-database-migration:v0.14.0-test001
+    image: yeagerai/simulator-database-migration:v0.16.0-test000
     environment:
       - DB_URL=postgresql://postgres:postgres@postgres/genlayer_state
     volumes:

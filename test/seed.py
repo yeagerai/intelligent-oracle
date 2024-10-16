@@ -13,6 +13,7 @@ from eth_account._utils.validation import is_valid_address
 from tools.response import has_success_status, has_successful_execution
 from tools.accounts import create_new_account
 from tools.request import (
+    call_contract_method,
     deploy_intelligent_contract,
     payload,
     post_request,
@@ -35,7 +36,9 @@ def create_registry() -> str:
     return contract_address
 
 
-def create_football_prediction_market(registry_contract_address: str) -> str:
+def create_football_prediction_market(
+    registry_contract_address: str, data_source: str
+) -> str:
     contract_code = open("contracts/intelligent-oracle.py", "r").read()
     account = create_new_account()
 
@@ -76,6 +79,21 @@ def create_football_prediction_market(registry_contract_address: str) -> str:
     assert has_success_status(register_result)
     assert has_successful_execution(register_result)
 
+    # Submit the data source
+    submit_data_source_result = send_transaction(
+        account,
+        contract_address,
+        "submit_data_source",
+        [data_source],
+    )
+    assert has_success_status(submit_data_source_result)
+    assert has_successful_execution(submit_data_source_result)
+
+    # Check that the data source was added to the list of data sources
+    contract_state = call_contract_method(contract_address, account, "get_dict", [])
+    print(f"contract_state: {contract_state}")
+    assert contract_state["data_sources"] == [data_source]
+
     return contract_address
 
 
@@ -99,10 +117,18 @@ if __name__ == "__main__":
     ).json()
     assert has_success_status(result)
 
+    # Contracts
     registry_address = create_registry()
     for i in range(2):
-        print(f"Creating football prediction market {i + 1}")
-        create_football_prediction_market(registry_address)
+        # Some contracts will get the correct data source, others will get the incorrect one
+        correct_data_source = (
+            "https://www.bbc.com/sport/football/scores-fixtures/2024-10-09"
+        )
+        incorrect_data_source = "https://www.bbc.com/"
+        data_source = correct_data_source if i % 2 == 0 else incorrect_data_source
+
+        print(f"Creating football prediction market {i} with data source {data_source}")
+        create_football_prediction_market(registry_address, data_source)
 
     print(f"Registry address: {registry_address}")
     set_key(".env", "VITE_CONTRACT_ADDRESS", registry_address)

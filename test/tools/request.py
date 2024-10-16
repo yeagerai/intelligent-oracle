@@ -59,7 +59,7 @@ def call_contract_method(
 ):
     params_as_string = json.dumps(method_args)
     encoded_data = encode_transaction_data([method_name, params_as_string])
-    method_response = post_request_localhost(
+    method_response = post_request(
         payload(
             "eth_call",
             {
