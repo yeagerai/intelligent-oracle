@@ -113,6 +113,16 @@
                     </p>
                   </div>
                 </div>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-600">Created at: {{ formatDate(tx.created_at) }}</p>
+                  <p class="text-sm text-gray-600">Nonce: {{ tx.nonce }}</p>
+                  <h4 class="text-sm font-medium text-gray-900 mt-2">Validators and Votes:</h4>
+                  <ul class="mt-1 space-y-1">
+                    <li v-for="validator in tx.consensus_data.validators" :key="validator.address" class="text-sm text-gray-600">
+                      {{ validator.address }}: {{ tx.consensus_data.votes[validator.address] || 'No vote' }}
+                    </li>
+                  </ul>
+                </div>
               </li>
             </ul>
           </div>
@@ -139,7 +149,10 @@ const oracle = ref<Oracle>();
 interface Transaction {
   consensus_data: {
     final: boolean;
-    validators: any[];
+    validators: {
+      address: string;
+      // Add other validator properties if needed
+    }[];
     votes: {
       [key: string]: string;
     };
@@ -198,6 +211,7 @@ const transactions = ref<Transaction[]>([]);
 
 onMounted(async () => {
   await loadOracle();
+  console.log(transactions.value)
 });
 
 async function loadOracle() {
