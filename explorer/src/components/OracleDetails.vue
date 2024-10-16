@@ -244,7 +244,6 @@ const selectedTransaction = ref<Transaction | null>(null);
 
 onMounted(async () => {
   await loadOracle();
-  console.log(transactions.value)
 });
 
 async function loadOracle() {
