@@ -113,21 +113,6 @@
                     </p>
                   </div>
                 </div>
-                <div class="mt-2 sm:flex sm:justify-between">
-                  <div class="sm:flex">
-                    <p class="flex items-center text-sm text-gray-500">
-                      From: {{ tx.from }}
-                    </p>
-                    <p class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                      To: {{ tx.to }}
-                    </p>
-                  </div>
-                  <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                    <p>
-                      Value: {{ tx.value }}
-                    </p>
-                  </div>
-                </div>
               </li>
             </ul>
           </div>
@@ -152,9 +137,12 @@ const genlayerStore = useGenlayerStore();
 const oracle = ref<Oracle>();
 
 interface Transaction {
-  client_session_id: string | null;
   consensus_data: {
     final: boolean;
+    validators: any[];
+    votes: {
+      [key: string]: string;
+    };
     leader_receipt: {
       args: string[][];
       class_name: string;
@@ -182,10 +170,6 @@ interface Transaction {
         stake: number;
       };
       vote: string;
-    };
-    validators: any[];
-    votes: {
-      [key: string]: string;
     };
   };
   created_at: string;
