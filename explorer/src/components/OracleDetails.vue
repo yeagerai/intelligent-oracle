@@ -117,11 +117,16 @@
                   <p class="text-sm text-gray-600">Created at: {{ formatDate(tx.created_at) }}</p>
                   <p class="text-sm text-gray-600">Nonce: {{ tx.nonce }}</p>
                   <h4 class="text-sm font-medium text-gray-900 mt-2">Validators and Votes:</h4>
-                  <ul class="mt-1 space-y-1">
-                    <li v-for="validator in tx.consensus_data.validators" :key="validator.address" class="text-sm text-gray-600">
-                      {{ validator.address }}: {{ tx.consensus_data.votes[validator.address] || 'No vote' }}
-                    </li>
-                  </ul>
+                  <template v-if="tx.consensus_data.validators.length > 0">
+                    <ul class="mt-1 space-y-1">
+                      <li v-for="validator in tx.consensus_data.validators" :key="validator.address" class="text-sm text-gray-600">
+                        {{ validator.address }}: {{ tx.consensus_data.votes[validator.address] || 'No vote' }}
+                      </li>
+                    </ul>
+                  </template>
+                  <template v-else>
+                    <p class="mt-1 text-sm text-gray-600">Leader only execution</p>
+                  </template>
                 </div>
               </li>
             </ul>
