@@ -1,9 +1,5 @@
 import { defineStore } from "pinia";
-import {
-  createClient,
-  createAccount as createGenLayerAccount,
-  generatePrivateKey,
-} from "genlayer-js";
+import { createClient, createAccount as createGenLayerAccount, generatePrivateKey } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { ref, computed } from "vue";
 import { Address } from "genlayer-js/types";
@@ -39,9 +35,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   );
 
   // Account
-  const accountPrivateKey = ref(
-    localStorage.getItem("accountPrivateKey") || null
-  );
+  const accountPrivateKey = ref(localStorage.getItem("accountPrivateKey") || null);
 
   const account = computed(() => {
     if (!accountPrivateKey.value) {
@@ -67,8 +61,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   });
 
   async function refreshOracles() {
-    const registryContractAddress = import.meta.env
-      .VITE_CONTRACT_ADDRESS as Address;
+    const registryContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as Address;
     console.log("registryContractAddress", registryContractAddress);
     const contract_addresses: Address[] = await client.value.readContract({
       account: account.value,
@@ -77,9 +70,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
       args: [],
     });
 
-    _oracles.value = await Promise.all(
-      contract_addresses.map((address) => fetchOracle(address))
-    );
+    _oracles.value = await Promise.all(contract_addresses.map((address) => fetchOracle(address)));
   }
 
   async function fetchOracle(address: Address): Promise<Oracle> {
@@ -94,6 +85,19 @@ export const useGenlayerStore = defineStore("genlayer", () => {
       .then((result) => ({ ...result, address }));
   }
 
+  async function resolveOracle(address: Address): Promise<Oracle> {
+    console.log("resolveOracle", address);
+    return await client.value
+      .writeContract({
+        account: account.value,
+        address,
+        functionName: "resolve",
+        args: [],
+        value: BigInt(0),
+      })
+      .then((result) => ({ ...result, address }));
+  }
+
   return {
     accountPrivateKey,
     client,
@@ -101,5 +105,6 @@ export const useGenlayerStore = defineStore("genlayer", () => {
     oracles,
     refreshOracles,
     fetchOracle,
+    resolveOracle,
   };
 });

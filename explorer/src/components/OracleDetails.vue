@@ -2,17 +2,22 @@
   <div class="min-h-screen bg-gray-100 text-gray-900">
     <header class="bg-white shadow">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-900">Oracle Details</h1>
+        <div class="flex items-center space-x-4">
+          <router-link 
+            to="/" 
+            class="text-4xl font-medium py-2 cursor-pointer"
+          >
+          &#9204;
+          </router-link>
+          <h1 class="text-3xl font-bold text-gray-900">Oracle Details</h1>
+        </div>
         <div class="flex space-x-4">
           <button @click="refreshOracle" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
             Refresh Oracle
           </button>
-          <router-link 
-            to="/" 
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Back to Main Screen
-          </router-link>
+          <button @click="resolveOracle" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+            Initiate Resolution
+          </button>
         </div>
       </div>
     </header>
@@ -64,22 +69,8 @@
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ formatDate(oracle.earliest_resolution_date) }}</dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Creator</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <Address :address="oracle.creator" />
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Prediction Market ID</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ oracle.prediction_market_id }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Valid Data Sources</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <ul class="list-disc pl-5">
-                    <li v-for="source in oracle.valid_data_sources" :key="source">{{ source }}</li>
-                  </ul>
-                </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Analysis</dt>
@@ -117,10 +108,10 @@
                   <p class="text-sm text-gray-600">Created at: {{ formatDate(tx.created_at) }}</p>
                   <p class="text-sm text-gray-600">Nonce: {{ tx.nonce }}</p>
                   <h4 class="text-sm font-medium text-gray-900 mt-2">Validators and Votes:</h4>
-                  <template v-if="tx.consensus_data.validators.length > 0">
+                  <template v-if="Object.entries(tx.consensus_data.votes).length > 0">
                     <ul class="mt-1 space-y-1">
-                      <li v-for="validator in tx.consensus_data.validators" :key="validator.address" class="text-sm text-gray-600">
-                        {{ validator.address }}: {{ tx.consensus_data.votes[validator.address] || 'No vote' }}
+                      <li v-for="validator in Object.entries(tx.consensus_data.votes)" :key="validator[0]" class="text-sm text-gray-600">
+                        {{ validator[0] }}: {{ tx.consensus_data.votes[validator[0]] || 'No vote' }}
                       </li>
                     </ul>
                   </template>
@@ -262,6 +253,11 @@ async function refreshOracle() {
   await loadOracle();
 }
 
+async function resolveOracle() {
+  await genlayerStore.resolveOracle(route.params.address as AddressType);
+  await loadOracle();
+}
+
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Not specified';
   const date = new Date(dateString);
@@ -280,7 +276,21 @@ function closeModal() {
 
 const prettyJson = computed(() => {
   if (!selectedTransaction.value) return '';
-  return JSON.stringify(selectedTransaction.value, null, 2);
+  return JSON.stringify({
+    ...selectedTransaction.value,
+    consensus_data: {
+      ...selectedTransaction.value.consensus_data,
+      leader_receipt: {
+        ...selectedTransaction.value.consensus_data.leader_receipt,
+        contract_state: `${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(0,10)}...${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(-10)}`,
+      },
+      validators: selectedTransaction.value.consensus_data.validators.map((validator: any) => ({
+        ...validator,
+        eq_outputs: undefined,
+        contract_state: `${validator.contract_state.slice(0,10)}...${validator.contract_state.slice(-10)}`,
+      })),
+    },
+  }, null, 2);
 });
 
 function copyToClipboard() {
