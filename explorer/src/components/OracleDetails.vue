@@ -99,7 +99,7 @@
                     {{ tx.hash }}
                   </p>
                   <div class="ml-2 flex-shrink-0 flex">
-                    <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
                       {{ tx.status }}
                     </p>
                   </div>
