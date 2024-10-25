@@ -85,14 +85,14 @@ export const useGenlayerStore = defineStore("genlayer", () => {
       .then((result) => ({ ...result, address }));
   }
 
-  async function resolveOracle(address: Address): Promise<Oracle> {
+  async function resolveOracle(address: Address, evidence: string): Promise<Oracle> {
     console.log("resolveOracle", address);
     return await client.value
       .writeContract({
         account: account.value,
         address,
         functionName: "resolve",
-        args: [],
+        args: evidence ? [evidence] : [],
         value: BigInt(0),
       })
       .then((result) => ({ ...result, address }));
