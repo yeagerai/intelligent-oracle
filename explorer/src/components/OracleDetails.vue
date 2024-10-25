@@ -74,7 +74,40 @@
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Analysis</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ oracle.analysis || 'No analysis available' }}</dd>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <div v-if="oracle.analysis" class="whitespace-pre-wrap break-words">
+                    <div v-if="oracle.analysis.justification || oracle.analysis.reasoning">{{ oracle.analysis.justification || oracle.analysis.reasoning }}</div>
+                    <div v-else>No analysis available</div>
+                  </div>
+                  <div v-else>No analysis available</div>
+                </dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Additional Sources</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <div v-if="oracle.analysis?.metadata?.additional_source" class="whitespace-pre-wrap break-words">
+                    {{ oracle.analysis.metadata.additional_source }}
+                  </div>
+                  <div v-else>No additional sources available</div>
+                </dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Assumptions</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <div v-if="oracle.analysis?.metadata?.assumptions" class="whitespace-pre-wrap break-words">
+                    {{ oracle.analysis.metadata.assumptions }}
+                  </div>
+                  <div v-else>No assumptions available</div>
+                </dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Confidence Level</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <div v-if="oracle.analysis?.metadata?.confidenceLevel" class="whitespace-pre-wrap break-words">
+                    {{ oracle.analysis.metadata.confidenceLevel }}
+                  </div>
+                  <div v-else>No confidence level available</div>
+                </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Data Sources</dt>
@@ -314,6 +347,7 @@ function closeResolutionModal() {
 
 const prettyJson = computed(() => {
   if (!selectedTransaction.value) return '';
+  console.log('🚀 ~ prettyJson ~ selectedTransaction:', selectedTransaction);
   return JSON.stringify({
     ...selectedTransaction.value,
     consensus_data: {
@@ -322,7 +356,7 @@ const prettyJson = computed(() => {
         ...selectedTransaction.value.consensus_data.leader_receipt,
         contract_state: `${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(0,10)}...${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(-10)}`,
       } : undefined,
-      validators: selectedTransaction.value.consensus_data.validators.map((validator: any) => ({
+      validators: selectedTransaction.value.consensus_data?.validators.map((validator: any) => ({
         ...validator,
         eq_outputs: undefined,
         contract_state: `${validator.contract_state.slice(0,10)}...${validator.contract_state.slice(-10)}`,
@@ -330,6 +364,7 @@ const prettyJson = computed(() => {
     },
   }, null, 2);
 });
+  
 
 function copyToClipboard() {
   if (selectedTransaction.value) {
