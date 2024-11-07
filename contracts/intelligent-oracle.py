@@ -34,7 +34,8 @@ class IntelligentOracle(IContract):
         description: str,
         potential_outcomes: str,
         rules: str,
-        data_sources: str,  # List of URL or regex patterns for valid data sources. Users will provide data that matches on these patterns.
+        data_source_domains: str,  # List of domains for valid data sources.
+        resolution_urls: str,  # List of URL to resolve the prediction.
         earliest_resolution_date: (
             str  # Minimum date and time when the oracle can be resolved
         ),
@@ -45,20 +46,43 @@ class IntelligentOracle(IContract):
             or not description
             or not potential_outcomes
             or not rules
-            or not data_sources
             or not earliest_resolution_date
         ):
             raise ValueError("Missing required fields.")
 
-        self.prediction_market_id = prediction_market_id
-        self.title = title
-        self.description = description
+        if not resolution_urls and not data_source_domains:
+            raise ValueError("Missing resolution URLs or data source domains.")
+
+        if len(resolution_urls) > 0 and len(data_source_domains) > 0:
+            raise ValueError(
+                "Cannot provide both resolution URLs and data source domains."
+            )
+
         self.potential_outcomes = [
             outcome.strip() for outcome in potential_outcomes.split(",")
         ]
+
+        if len(self.potential_outcomes) < 2:
+            raise ValueError("At least two potential outcomes are required.")
+
+        if len(self.potential_outcomes) != len(set(self.potential_outcomes)):
+            raise ValueError("Potential outcomes must be unique.")
+
+        self.prediction_market_id = prediction_market_id
+        self.title = title
+        self.description = description
+
         self.rules = [rule.strip() for rule in rules.split(",")]
-        self.data_sources = [
-            datasource.strip() for datasource in data_sources.split(",")
+        self.data_source_domains = [
+            datasource.strip()
+            .replace("http://", "")
+            .replace("https://", "")
+            .replace("www.", "")
+            for datasource in data_source_domains.split(",")
+            if datasource.strip()
+        ]
+        self.resolution_urls = [
+            url.strip() for url in resolution_urls.split(",") if url.strip()
         ]
 
         # Parse earliest_resolution_date with timezone info
@@ -73,52 +97,50 @@ class IntelligentOracle(IContract):
         self.analysis = None
         self.outcome = None
 
-        if len(self.potential_outcomes) < 2:
-            raise ValueError("At least two potential outcomes are required.")
-
-        if len(self.potential_outcomes) != len(set(self.potential_outcomes)):
-            raise ValueError("Potential outcomes must be unique.")
-
-        if not self.data_sources:
-            raise ValueError("No data sources loaded.")
-
     async def _check_evidence(self, evidenze: str):
-        if evidenze in self.data_sources:
+        if evidenze in self.data_source_domains:
             return True
 
-        if any(data_source in evidenze for data_source in self.data_sources):
+        if any(data_source in evidenze for data_source in self.data_source_domains):
             return True
 
         return False
 
-    async def resolve(self, evidence: str = ""):
+    async def resolve(self, evidence_url: str = ""):
         if self.status == Status.RESOLVED:
             raise ValueError("Cannot resolve an already resolved oracle.")
+
         if datetime.now().astimezone() < self.earliest_resolution_date:
             raise ValueError("Cannot resolve before the earliest resolution date.")
 
-        if evidence:
-            is_valid = await self._check_evidence(evidence)
+        if len(self.resolution_urls) > 0 and evidence_url:
+            raise ValueError(
+                "An evidence URL was provided but the oracle is configured to use resolution URLs already provided."
+            )
+
+        if len(self.resolution_urls) == 0 and not evidence_url:
+            raise ValueError(
+                "No evidence URL provided and the oracle is not configured to use resolution URLs."
+            )
+
+        if evidence_url:
+            is_valid = await self._check_evidence(evidence_url)
             if not is_valid:
-                raise ValueError("Invalid evidence provided.")
+                raise ValueError(
+                    "The evidence URL does not match any of the data source domains."
+                )
 
         # Analyze each webpage separately
-        analyzed_data_sources_output = []
-        for data_source in self.data_sources:
-            web_data = await get_webpage_with_principle(
-                data_source, "Web page data should coincide"
-            )
-            print(web_data)
+        analyzed_outputs = []
+        resources_to_check = (
+            self.resolution_urls if len(self.resolution_urls) > 0 else [evidence_url]
+        )
 
-            evidence_data = ""
-            if evidence:
-                evidence_web_data = await get_webpage_with_principle(
-                    evidence, "Web page data should coincide"
-                )
-                evidence_data = f"""The following URL was used to provide evidence: {evidence}
-                Evidence extracted from the webpage:
-                {evidence_web_data}
-                """
+        for resource_url in resources_to_check:
+            resource_web_data = await get_webpage_with_principle(
+                resource_url, "Web page data should coincide"
+            )
+            print(resource_web_data)
 
             task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. 
             Your goal is to determine the correct outcome based on the user-defined rules, 
@@ -132,7 +154,9 @@ class IntelligentOracle(IContract):
 
             2. **Webpage HTML Content:**
             ```
-            {web_data}
+            The following URL was used to provide resolution: {resource_url}
+            Content extracted from the webpage:
+            {resource_web_data}
             ```
 
             3. **Resolution Date:**
@@ -144,10 +168,7 @@ class IntelligentOracle(IContract):
             ```
             {self.potential_outcomes}
             ```
-            5. **Optional User-Provided Evidence:**
-            ```
-            {evidence_data if evidence_data else "No additional evidence provided."}
-            ```
+         
 
             ### **Your Task:**
             1. **Analyze the Inputs:**
@@ -157,12 +178,12 @@ class IntelligentOracle(IContract):
 
             2. **Determine Your Vote:**
             - Based on your analysis, decide which potential outcome is correct.
-            - If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, select `None`.
+            - If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, your output vote should be `null`.
 
             3. **Provide Reasoning:**
             - Write a clear, self-contained reasoning for your vote.
             - Reference specific parts of the rules and the extracted data that support your decision.
-            - Ensure that someone reading the reasoning can understand your reasoning without needing additional information.
+            - Ensure that someone reading the reasoning can understand it without needing additional information.
 
             4. **Include Metadata:**
             - Add additional useful metadata, such as:
@@ -199,7 +220,7 @@ class IntelligentOracle(IContract):
                 "`vote` field must be exactly the same. All other fields must be similar",
             )
             result_dict = _parse_json_dict(result)
-            analyzed_data_sources_output.append(result_dict)
+            analyzed_outputs.append(result_dict)
 
         # Gather all results to form one final decision
 
@@ -214,7 +235,7 @@ class IntelligentOracle(IContract):
 
         2. **Processed data from AI Validators:**
         ```
-        {analyzed_data_sources_output}
+        {analyzed_outputs}
         ```
 
         3. **Resolution Date:**
@@ -286,7 +307,8 @@ class IntelligentOracle(IContract):
             "description": self.description,
             "potential_outcomes": self.potential_outcomes,
             "rules": self.rules,
-            "data_sources": self.data_sources,
+            "data_sources_domains": self.data_source_domains,
+            "resolution_urls": self.resolution_urls,
             "status": self.status.value,
             "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
             "analysis": self.analysis,
