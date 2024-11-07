@@ -9,7 +9,7 @@ services:
     ports:
       - 5173:5173
     volumes:
-      - ./explorer:/app
+      - ./explorer/src:/app/src # Warning: if you modify something in another place (public folder or index.html for example), you need to restart the container
     depends_on:
       seed:
         condition: service_completed_successfully
