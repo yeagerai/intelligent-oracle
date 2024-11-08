@@ -16,7 +16,8 @@ export interface Oracle {
   description: string;
   prediction_market_id: string;
   valid_data_sources: string[];
-  data_sources: string[];
+  data_sources_domains: string[];
+  resolution_urls: string[];
   analysis: string;
 }
 

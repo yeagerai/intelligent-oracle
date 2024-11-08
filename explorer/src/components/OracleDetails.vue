@@ -53,6 +53,24 @@
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Data Sources Domains:</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <ul v-if="oracle.data_sources_domains.length > 0" class="list-disc pl-5">
+                    <li v-for="domain in oracle.data_sources_domains" :key="domain">{{ domain }}</li>
+                  </ul>
+                  <div v-else>No data sources domains available</div>
+                </dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-gray-500">Resolution URLs:</dt>
+                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <ul v-if="oracle.resolution_urls && oracle.resolution_urls.length > 0" class="list-disc pl-5">
+                    <li v-for="url in oracle.resolution_urls" :key="url">{{ url }}</li>
+                  </ul>
+                  <div v-else>No resolution URLs available</div>
+                </dd>
+              </div>
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt class="text-sm font-medium text-gray-500">Status</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   <span :class="oracle.status === 'Active' ? 'text-green-600' : 'text-yellow-600'">
@@ -107,14 +125,6 @@
                     {{ oracle.analysis.metadata.confidenceLevel }}
                   </div>
                   <div v-else>No confidence level available</div>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Data Sources</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <ul class="list-disc pl-5">
-                    <li v-for="source in oracle.data_sources" :key="source">{{ source }}</li>
-                  </ul>
                 </dd>
               </div>
             </dl>
@@ -191,7 +201,7 @@
     <div v-if="showResolutionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeModal">
       <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3 text-center">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">Optinally provide an evidence URL for resolution</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Provide a URL for resolution</h3>
           <div class="mt-2 px-7 py-3">
             <input v-model="resolutionEvidence" type="text" class="w-full h-12 border border-gray-300 rounded-md p-2" placeholder="Enter evidence URL">
           </div>
@@ -336,8 +346,12 @@ function closeTransactionModal() {
 }
 
 function openResolutionModal() {
-  resolutionEvidence.value = "";
-  showResolutionModal.value = true;
+  if (oracle.value?.resolution_urls && oracle.value.resolution_urls.length > 0) {
+    resolveOracle();
+  } else {
+    resolutionEvidence.value = "";
+    showResolutionModal.value = true;
+  }
 }
 
 function closeResolutionModal() {
