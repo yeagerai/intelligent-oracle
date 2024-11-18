@@ -30,7 +30,9 @@ This project implements a chatbot wizard to assist developers in configuring int
 3. Set up environment variables:
    Create a `.env` file in the root directory and add:
    ```
-   OPENAI_API_KEY=your_openai_api_key_here
+   NUXT_PUBLIC_CHAT_API_URL=your_chat_api_url_here
+   NUXT_PUBLIC_BRIDGE_API_URL=your_bridge_api_url_here
+   NUXT_PUBLIC_EXPLORER_URL=your_explorer_url_here
    ```
 
 ## Configuration
