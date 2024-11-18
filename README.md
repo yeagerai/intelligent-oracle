@@ -1,68 +1,88 @@
-# intelligent-oracle
+# Intelligent Oracle System
 
-## Current state
+A complete system for deploying and managing AI-powered oracles on the GenLayer blockchain. This system enables the creation and resolution of prediction markets using natural language processing and web data analysis.
 
-TODO: think of how to handle registration of contracts in the registry. Currently needs to be done "manually", like in the `seed.py` script.
+## Prerequisites
 
-### intelligent-oracle.py
+Before running this project, ensure you have:
 
-- using `Registry` pattern
-  - each contract deployment needs to be registered in the registry "manually". This is not the best UX.
-- `Factory` pattern is missing given limitations in the Simulator.
+1. [GenLayer Studio](https://github.com/yeagerai/genlayer-simulator) installed and running locally
+   - Docker 26+
+   - Node.js 18+
+   - Install with: `npm install -g genlayer`
+   - Start with: `genlayer init`
 
-### docker-compose.yml
+## Project Components
 
-Boots:
+### 1. Intelligent Oracle Contracts
+Located in [`/contracts`](/contracts)
+- Intelligent Oracle contract for prediction market resolution
+- Registry contract for managing deployed oracles
+- Supports flexible data sources, multiple outcomes, and rule-based resolution
 
-- simulator
-  - postgres
-  - database migration
-  - jsonrpc
-- seed: creates validators and registers contracts
-- explorer
+### 2. Bridge & Chat API
+Located in [`/bridge`](/bridge)
+- Handles oracle deployment to GenLayer blockchain
+- Provides Chat API integration with OpenAI's GPT models
 
-### Contract tests
+### 3. Configuration Wizard UI
+Located in [`/ui-wizard`](/ui-wizard)
+- Interactive chatbot interface for oracle configuration
+- Step-by-step guidance through setup process
+- Real-time AI assistance using GPT-4
 
-There's only one e2e test with football prediction market.
+### 4. Explorer Interface
+Located in [`/explorer`](/explorer) 
+- Simple dashboard for viewing deployed oracles
+- Monitor oracle status and outcomes
+- View market details and resolution data
 
-TODO: Add more tests, with happy and sad paths.
+## Getting Started
 
-### Explorer
+1. Start GenLayer Studio:
+```bash
+genlayer up
+```
 
-Simple display working
-
-TODO:
-
-- add appeals (currently blocked by the simulator)
-- allow submitting data sources
-  - this feature might not make it to the final version, but it's great to tinker around
-
-## Running
-
-TODO:
-
-- automate the creation of validators with https://github.com/yeagerai/genlayer-simulator/issues/567
-
-### Common pitfalls
-
-The envvar `VITE_CONTRACT_ADDRESS` is set at start time, and it's not dynamically updated. You will need to restart the explorer container to update it.
-
-### Spin up
-
-In a separate terminal run
-
+2. Spin up the project:
 ```bash
 docker-compose up --build
 ```
 
-### Tests
-
-Activate your Python virtual environment and then
-
+3. Run tests:
 ```bash
+# Activate your Python virtual environment first
 pip install -r test/requirements.txt
-```
-
-```bash
 pytest test/
 ```
+
+## Common Pitfalls
+
+- The `VITE_CONTRACT_ADDRESS` environment variable is set at startup and requires explorer container restart to update
+- Contract registration currently needs manual handling through the `seed.py` script
+- Factory pattern implementation is limited due to current Simulator constraints
+
+## TODO List
+
+- [ ] Implement appeals functionality (blocked by simulator development)
+- [ ] Implement prodction market resolution via Bridge
+- [ ] Add data source submission interface
+- [ ] Implement factory pattern for Intelligent Oracle contract deployment
+
+## Architecture
+
+```
+├── contracts/         # Smart contracts implementation
+├── bridge/           # Backend API & blockchain integration
+├── ui-wizard/        # Configuration wizard frontend
+├── explorer/         # Oracle monitoring interface
+└── test/            # E2E and contract tests
+```
+
+## Contributing
+
+Contributions are welcome! Please check the individual component READMEs for specific development guidelines.
+
+## License
+
+MIT
