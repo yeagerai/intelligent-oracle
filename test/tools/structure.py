@@ -2,7 +2,7 @@ execute_icontract_function_response_structure = {
     "consensus_data": {
         "final": bool,
         "leader_receipt": {
-            "args": list,
+            "calldata": str,
             "class_name": str,
             "contract_state": str,
             "eq_outputs": {"leader": dict},
@@ -21,14 +21,14 @@ execute_icontract_function_response_structure = {
                 "plugin_config": dict,
             },
             "vote": str,
+            "pending_transactions": list,
         },
         "validators": list,
         "votes": dict,
     },
     "created_at": str,
     "data": {
-        "function_args": str,
-        "function_name": str,
+        "calldata": str,
     },
     "from_address": str,
     "hash": str,
