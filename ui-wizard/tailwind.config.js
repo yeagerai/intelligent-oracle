@@ -3,10 +3,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#111111", // Dark background
-        "primary-text": "#ffffff", // White text
-        "secondary-text": "#999999", // Gray secondary text
-        highlight: "#8e44ad", // Purple highlight color (AI-Powered Oracle)
+        background: "#F1F0F3", // Dark background
+        "primary-text": "#2D2D2D", // White text
+        "secondary-text": "#2E2E2E", // Gray secondary text
+        highlight: "#801EE3", // Purple highlight color (AI-Powered Oracle)
         accent: "#f39c12", // Orange accent (Prediction markets line)
         "ticker-background": "#8e44ad", // Purple ticker background
         "ticker-text": "#ffffff", // White text for ticker

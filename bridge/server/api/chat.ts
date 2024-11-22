@@ -24,7 +24,7 @@ export default defineLazyEventHandler(async () => {
 
     // Call the language model
     const result = await streamText({
-      model: openai("gpt-4-turbo"),
+      model: openai(useRuntimeConfig().openaiApiModel),
       messages: convertToCoreMessages(conversationMessages),
 
       async onFinish({ text, toolCalls, toolResults, usage, finishReason }) {
@@ -45,8 +45,8 @@ You are a helpful assistant designed to help developers configure an Intelligent
 	1.	title: Name of the prediction market.
 	2.	potentialOutcomes: A list of two or more possible outcomes.
 	3.	rules: Conditions and parameters defining the Oracle, written in natural language.
-	4.	dataSourceDomains: A list of valid domains from which data will be fetched.
-  5.  resolutionURLs: A list of valid URLs where the resolution of the prediction market will be posted.
+	4.	dataSourceDomains: A list of valid domains from which data will be fetched. Can only be provided if resolutionURLs is not provided.
+  5.  resolutionURLs: A list of valid URLs where the resolution of the prediction market will be posted. Can only be provided if dataSourceDomains is not provided.
 	6.	earliestResolutionDate: The minimum date when the Oracle can be resolved (defaults to the current date if not specified).
 
 Instructions:

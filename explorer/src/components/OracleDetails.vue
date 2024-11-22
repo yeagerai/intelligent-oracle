@@ -53,12 +53,12 @@
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Data Sources Domains:</dt>
+                <dt class="text-sm font-medium text-gray-500">Data Source Domains:</dt>
                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <ul v-if="oracle.data_sources_domains.length > 0" class="list-disc pl-5">
-                    <li v-for="domain in oracle.data_sources_domains" :key="domain">{{ domain }}</li>
+                  <ul v-if="oracle.data_source_domains.length > 0" class="list-disc pl-5">
+                    <li v-for="domain in oracle.data_source_domains" :key="domain">{{ domain }}</li>
                   </ul>
-                  <div v-else>No data sources domains available</div>
+                  <div v-else>No data source domains available</div>
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">

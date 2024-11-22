@@ -151,78 +151,72 @@ class IntelligentOracle(IContract):
                 resource_web_data = await eq.get_webpage(resource_url, "text") 
                 print(resource_web_data)
 
-                task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. 
-                Your goal is to determine the correct outcome based on the user-defined rules, 
-                the provided webpage HTML content, the resolution date, and the list of potential outcomes.
+                task = f"""
+You are an AI Validator tasked with resolving a prediction market. 
+Your goal is to determine the correct outcome based on the user-defined rules, 
+the provided webpage HTML content, the resolution date, and the list of potential outcomes.
 
-                ### **Inputs:**
-                1. **Rules (Natural Language):**
-                ```
-                {self.rules}
-                ```
+### Inputs
+<rules>
+{self.rules}
+</rules>
 
-                2. **Webpage HTML Content:**
-                ```
-                The following URL was used to provide resolution: {resource_url}
-                Content extracted from the webpage:
-                {resource_web_data}
-                ```
+<source_url>
+{resource_url}
+</source_url>
 
-                3. **Resolution Date:**
-                ```
-                {self.earliest_resolution_date}
-                ```
+<webpage_content>
+{resource_web_data}
+</webpage_content>
 
-                4. **Potential Outcomes:**
-                ```
-                {self.potential_outcomes}
-                ```
-            
+<resolution_date>
+{self.earliest_resolution_date}
+</resolution_date>
 
-                ### **Your Task:**
-                1. **Analyze the Inputs:**
-                - Carefully read and interpret the user-defined rules.
-                - Parse the HTML content to extract meaningful information relevant to the rules.
-                - Consider the resolution date in your analysis to ensure timeliness of the data.
-
-                2. **Determine The Outcome:**
-                - Based on your analysis, decide which potential outcome is correct.
-                - If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, your output vote should be `UNDETERMINED`.
-                - If an outcome can be determined, but the outcome is not in the list of potential outcomes, your output vote should be `ERROR`.
-
-                3. **Provide Reasoning:**
-                - Write a clear, self-contained reasoning for your vote.
-                - Reference specific parts of the rules and the extracted data that support your decision.
-                - Ensure that someone reading the reasoning can understand it without needing additional information.
-
-                4. **Include Metadata:**
-                - Add additional useful metadata, such as:
-                - Confidence level (e.g., High, Medium, Low).
-                - Any assumptions made during your analysis.
-                - Relevant URLs or sources extracted from the HTML content.
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
 
 
-                ### **Output Format:**
+### **Your Task:**
+1. **Analyze the Inputs:**
+- Carefully read and interpret the user-defined rules.
+- Parse the HTML content to extract meaningful information relevant to the rules.
+- Determine if the source pertains to the event that is being predicted.
+- Determine if the event has occurred yet.
 
-                Provide your response in **valid JSON** format with the following structure:
+2. **Provide Reasoning:**
+- Write a clear, self-contained reasoning for the outcome.
+- Reference specific parts of the rules and the extracted data that support your decision.
+- Ensure that someone reading the reasoning can understand it without needing additional information.
 
-                ```json
-                {{
-                    "reasoning": "Your detailed reasoning here.",
-                    "metadata": {{
-                        "confidenceLevel": "High | Medium | Low",
-                        "assumptions": "Any assumptions you made during analysis.",
-                    }},
-                    "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list",                
-                }}
-                ```
+3. **Determine The Outcome:**
+- Based on your analysis, decide which potential outcome is correct.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
+- If the information is insufficient or inconclusive, or the event has not occurred yet, and you cannot confidently determine an outcome based on this source, the outcome should be `UNDETERMINED`.
 
-                ### **Constraints and Considerations:**
 
-                - **Accuracy:** Base your decision strictly on the provided inputs.
-                - **Objectivity:** Remain neutral and unbiased.
-                - **Clarity:** Make sure your reasoning is easy to understand.
-                - **Validity:** Ensure the JSON output is properly formatted and free of errors. It should be parseable by Python.
+
+
+### **Output Format:**
+
+Provide your response in **valid JSON** format with the following structure:
+
+```json
+{{
+    "pertains_to_event": "true | false",
+    "has_occurred": "true | false",
+    "reasoning": "Your detailed reasoning here.",
+    "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if no outcome can be determined based on this source, `ERROR` if the outcome is not in the potential outcomes list"                
+}}
+```
+
+### **Constraints and Considerations:**
+
+- **Accuracy:** Base your decision strictly on the provided inputs.
+- **Objectivity:** Remain neutral and unbiased.
+- **Clarity:** Make sure your reasoning is easy to understand.
+- **Validity:** Ensure the JSON output is properly formatted and free of errors. Do not include trailing commas.
                 """
                 result = await eq.call_llm(task)
                 print(result)
@@ -233,65 +227,59 @@ class IntelligentOracle(IContract):
 
         # Gather all results to form one final decision
 
-        task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine 
-        the correct outcome based on processed data from all of the individial data sources. Here are your inputs
+        task = f"""
+You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine 
+the correct outcome based on processed data from all of the individial data sources. Here are your inputs
 
-        ### **Inputs:**
-        1. **Rules (Natural Language):**
-        ```
-        {self.rules}
-        ```
+### Inputs
+<rules>
+{self.rules}
+</rules>
 
-        2. **Processed data from sources:**
-        ```
-        {analyzed_outputs}
-        ```
+<processed_data>
+{analyzed_outputs}
+</processed_data>
 
-        3. **Resolution Date:**
-        ```
-        {self.earliest_resolution_date}
-        ```
+<resolution_date>
+{self.earliest_resolution_date}
+</resolution_date>
 
-        4. **Potential Outcomes:**
-        ```
-        {self.potential_outcomes}
-        ```
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
 
-        ### **Your Task:**
-        1. **Analyze the Inputs:**
-        - Carefully read and interpret the user-defined rules.
-        - Take into account all the processed data form the sources.
-        - Consider the resolution date in your analysis to ensure timeliness of the data.
+### **Your Task:**
+1. **Analyze the Inputs:**
+- Carefully read and interpret the user-defined rules.
+- Take into account all the processed data form the sources.
+- Consider the resolution date in your analysis to ensure timeliness of the data.
 
-        2. **Determine The Outcome:**
-        - The output should be determined from the processed data form the resolution sources.
-        - Based on your analysis, decide which potential outcome is correct.
-        - If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, your output vote should be `UNDETERMINED`.
-        - If an outcome can be determined, but the outcome is not in the list of potential outcomes, your output vote should be `ERROR`.
-        - Your response should reflect a coherent summary outcome from the previous analysis.
+2. **Determine The Outcome:**
+- The output should be determined from the processed data form the resolution sources.
+- Based on your analysis, decide which potential outcome is correct.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
+- If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, the outcome should be `UNDETERMINED`.
+- Your response should reflect a coherent summary outcome from the previous analysis.
+- If multiple sources contradict each other, refer to the rules to determine how to resolve the contradiction.
+- If the rules do not provide a clear resolution, the outcome should be `ERROR`.
 
-        ### **Output Format:**
+### **Output Format:**
 
-        Provide your response in **valid JSON** format with the following structure:
+Provide your response in **valid JSON** format with the following structure:
 
-        ```json
-        {{
-        "reasoning": "Your detailed reasoning here.",
-        "metadata": {{
-                "confidenceLevel": "High | Medium | Low",
-                "assumptions": "Any assumptions you made during analysis.",
-                "sources": ["List of relevant URLs or sources, if any."]
-            }},
-        "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list",        
-        }}
-        ```
+```json
+{{
+"reasoning": "Your detailed reasoning here.",
+"outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list"        
+}}
+```
 
-        ### **Constraints and Considerations:**
+### **Constraints and Considerations:**
 
-        - **Accuracy:** Base your decision strictly on the provided inputs.
-        - **Objectivity:** Remain neutral and unbiased.
-        - **Clarity:** Make sure your reason is easy to understand.
-        - **Validity:** Ensure the JSON output is properly formatted and free of errors.
+- **Accuracy:** Base your decision strictly on the provided inputs.
+- **Objectivity:** Remain neutral and unbiased.
+- **Clarity:** Make sure your reason is easy to understand.
+- **Validity:** Ensure the JSON output is properly formatted and free of errors. Do not include trailing commas.
 
         """
 
@@ -310,7 +298,6 @@ class IntelligentOracle(IContract):
         if result_dict["outcome"] == "ERROR" or result_dict["outcome"] not in self.potential_outcomes:
             self.status = Status.ERROR
             return
-
 
         self.outcome = result_dict["outcome"]
         self.status = Status.RESOLVED
@@ -346,7 +333,7 @@ def _parse_json_dict(json_str: str) -> dict:
 
     # Remove trailing commas before closing braces/brackets
     import re
-    json_str = re.sub(r',\s*}', '}', json_str)
-    json_str = re.sub(r',\s*]', ']', json_str)
+    json_str = re.sub(r',(?!\s*?[\{\[\"\'\w])', '', json_str)
+    print(json_str)
 
     return json.loads(json_str)

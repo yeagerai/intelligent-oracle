@@ -16,7 +16,7 @@ export interface Oracle {
   description: string;
   prediction_market_id: string;
   valid_data_sources: string[];
-  data_sources_domains: string[];
+  data_source_domains: string[];
   resolution_urls: string[];
   analysis: string;
 }
@@ -83,7 +83,11 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         functionName: "get_dict",
         args: [],
       })
-      .then((result) => ({ ...result, address }));
+      .then((result) => ({ ...result, address }))
+      .catch((error) => {
+        console.error("Error fetching oracle:", error);
+        return { address, error: "Error fetching oracle" };
+      });
   }
 
   async function resolveOracle(address: Address, evidence: string): Promise<Oracle> {

@@ -57,10 +57,10 @@
               <h4 class="text-sm font-medium text-gray-500">Prediction Market ID:</h4>
               <p class="text-sm text-gray-900">{{ oracle.prediction_market_id }}</p>
             </div>
-            <div class="mb-2" v-if="oracle.data_sources_domains.length > 0">
+            <div class="mb-2" v-if="oracle.data_source_domains.length > 0">
               <h4 class="text-sm font-medium text-gray-500">Data Sources Domains:</h4>
               <ul class="list-disc pl-5 text-sm text-gray-900">
-                <li v-for="source in oracle.data_sources_domains" :key="source">{{ source }}</li>
+                <li v-for="source in oracle.data_source_domains" :key="source">{{ source }}</li>
               </ul>
             </div>
             <div class="mb-2" v-if="oracle.resolution_urls.length > 0">
