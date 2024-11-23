@@ -11,7 +11,7 @@ The Explorer Interface provides a simple dashboard for viewing and monitoring de
 
 ## Getting Started
 
-1. Set the `VITE_CONTRACT_ADDRESS` in `.env` file
+1. Copy the `.env.example` file in the root directory to `.env` and add your own values.
 2. Install dependencies:
     ```
     npm install

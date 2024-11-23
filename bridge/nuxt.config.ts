@@ -10,6 +10,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     openaiApiKey: process.env.NUXT_OPENAI_API_KEY,
     openaiApiModel: process.env.NUXT_OPENAI_API_MODEL,
+    ioContractPath: process.env.NUXT_IO_CONTRACT_PATH,
     simulatorUrl: process.env.NUXT_SIMULATOR_ENDPOINT,
     bridgePrivateKey: process.env.NUXT_BRIDGE_PRIVATE_KEY,
     icRegistryAddress: process.env.NUXT_IC_REGISTRY_ADDRESS,

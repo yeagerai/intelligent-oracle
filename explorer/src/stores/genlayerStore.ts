@@ -67,7 +67,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
     const contract_addresses: Address[] = await client.value.readContract({
       account: account.value,
       address: registryContractAddress,
-      functionName: "get_contract_addresses",
+      functionName: "get_contract_addresses", 
       args: [],
     });
 
@@ -76,7 +76,7 @@ export const useGenlayerStore = defineStore("genlayer", () => {
 
   async function fetchOracle(address: Address): Promise<Oracle> {
     console.log("fetchOracle", address);
-    return await client.value
+    const oracle = await client.value
       .readContract({
         account: account.value,
         address,
@@ -88,6 +88,14 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
+
+    // Update the oracle in the store if it exists
+    const existingIndex = _oracles.value.findIndex(o => o.address === address);
+    if (existingIndex >= 0) {
+      _oracles.value[existingIndex] = oracle;
+    }
+
+    return oracle;
   }
 
   async function resolveOracle(address: Address, evidence: string): Promise<Oracle> {

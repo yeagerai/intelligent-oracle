@@ -157,6 +157,18 @@ Your goal is to determine the correct outcome based on the user-defined rules,
 the provided webpage HTML content, the resolution date, and the list of potential outcomes.
 
 ### Inputs
+<title>
+{self.title}
+</title>
+
+<description>
+{self.description}
+</description>
+
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
+
 <rules>
 {self.rules}
 </rules>
@@ -169,13 +181,15 @@ the provided webpage HTML content, the resolution date, and the list of potentia
 {resource_web_data}
 </webpage_content>
 
-<resolution_date>
-{self.earliest_resolution_date}
-</resolution_date>
+<current_date>
+{datetime.now().astimezone()}
+</current_date>
 
-<potential_outcomes>
-{self.potential_outcomes}
-</potential_outcomes>
+<earliest_resolution_date>
+{self.earliest_resolution_date}
+</earliest_resolution_date>
+
+
 
 
 ### **Your Task:**
@@ -204,9 +218,9 @@ Provide your response in **valid JSON** format with the following structure:
 
 ```json
 {{
-    "pertains_to_event": "true | false",
-    "has_occurred": "true | false",
-    "reasoning": "Your detailed reasoning here.",
+    "valid_source": "true | false",
+    "event_has_occurred": "true | false",
+    "reasoning": "Your detailed reasoning here",
     "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if no outcome can be determined based on this source, `ERROR` if the outcome is not in the potential outcomes list"                
 }}
 ```
@@ -232,6 +246,18 @@ You are an AI Validator tasked with resolving a prediction market Oracle. Your g
 the correct outcome based on processed data from all of the individial data sources. Here are your inputs
 
 ### Inputs
+<title>
+{self.title}
+</title>
+
+<description>
+{self.description}
+</description>
+
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
+
 <rules>
 {self.rules}
 </rules>
@@ -240,13 +266,13 @@ the correct outcome based on processed data from all of the individial data sour
 {analyzed_outputs}
 </processed_data>
 
-<resolution_date>
-{self.earliest_resolution_date}
-</resolution_date>
+<current_date>
+{datetime.now().astimezone()}
+</current_date>
 
-<potential_outcomes>
-{self.potential_outcomes}
-</potential_outcomes>
+<earliest_resolution_date>
+{self.earliest_resolution_date}
+</earliest_resolution_date>
 
 ### **Your Task:**
 1. **Analyze the Inputs:**
@@ -269,7 +295,8 @@ Provide your response in **valid JSON** format with the following structure:
 
 ```json
 {{
-"reasoning": "Your detailed reasoning here.",
+"relevant_sources": "List of URLs that are relevant to the outcome",
+"reasoning": "Your detailed reasoning here",
 "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list"        
 }}
 ```

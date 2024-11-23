@@ -1,5 +1,5 @@
 <template>
-  <span :title="fullAddress">{{ shortenedAddress }}</span>
+  <span :title="fullAddress">{{ showFull ? fullAddress : shortenedAddress }}</span>
 </template>
 
 <script>
@@ -14,6 +14,10 @@ export default {
       type: Number,
       default: 12,
     },
+    showFull: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     fullAddress() {
@@ -27,9 +31,8 @@ export default {
         return this.address;
       }
 
-      const halfLength = Math.floor((this.maxLength - 3) / 2);
-      const start = this.address.slice(0, halfLength);
-      const end = this.address.slice(-halfLength);
+      const start = this.address.substring(0, 6);
+      const end = this.address.slice(-4);
 
       return `${start}...${end}`;
     },

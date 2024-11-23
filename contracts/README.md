@@ -24,8 +24,8 @@ The `IntelligentOracle` contract serves as an AI-powered oracle that can resolve
 - `description`: Detailed description of what is being predicted
 - `potential_outcomes`: Comma-separated list of possible outcomes
 - `rules`: Comma-separated list of resolution rules
-- `data_source_domains`: Allowed domains for evidence URLs
-- `resolution_urls`: Predefined URLs for resolution
+- `data_source_domains`: Allowed domains for evidence URLs. If set, `resolution_urls` need to be empty.
+- `resolution_urls`: Predefined URLs for resolution. If set, `data_source_domains` need to be empty.
 - `earliest_resolution_date`: Earliest date when the oracle can be resolved
 
 ### Registry
@@ -56,6 +56,6 @@ The `Registry` contract maintains a list of deployed intelligent oracle contract
 
 ## Technical Notes
 
-- The system uses GenVM for contract execution
+- The system uses GenLayer for contract execution
 - Global imports are currently handled in specific ways due to simulator limitations
 - Contract deployment is direct rather than using a factory pattern due to current platform constraints

@@ -43,11 +43,15 @@ This project provides two core APIs that power the GenLayer Intelligent Oracle:
    ```
 
 ## Usage
-1. Start the development server:
+1. Install dependencies:   
+   ```
+   npm install
+   ```
+2. Start the development server:
    ```
    npm run dev
    ```
-2. Open your browser and navigate to `http://localhost:3000`
+3. Open your browser and navigate to `http://localhost:3000`
 
 Note: the port may vary depending on the configuration of your local machine and other running services. For example, if you are running the [ui-wizard](../ui-wizard) project, it will use port 3001 by default.
 

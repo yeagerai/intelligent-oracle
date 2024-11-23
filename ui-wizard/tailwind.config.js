@@ -3,13 +3,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#F1F0F3", // Dark background
-        "primary-text": "#2D2D2D", // White text
-        "secondary-text": "#2E2E2E", // Gray secondary text
-        highlight: "#801EE3", // Purple highlight color (AI-Powered Oracle)
-        accent: "#f39c12", // Orange accent (Prediction markets line)
+        background: "#F1F0F3", // Light gray background
+        "primary-text": "#2D2D2D", // Dark gray text
+        "secondary-text": "#2E2E2E", // Slightly lighter dark gray text
+        highlight: "#801EE3", // Purple highlight color
+        accent: "#f39c12", // Orange accent color
         "ticker-background": "#8e44ad", // Purple ticker background
-        "ticker-text": "#ffffff", // White text for ticker
+        "ticker-text": "#ffffff", // White ticker text
       },
       fontFamily: {
         sans: ['"Helvetica Neue"', "Arial", "sans-serif"], // Clean, sans-serif font

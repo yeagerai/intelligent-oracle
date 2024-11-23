@@ -183,7 +183,7 @@ const formatMessage = (content: string) => {
             :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
             target="_blank"
             class="msg-btn px-4 py-1"
-            >See it in the explorer</a
+            >View in the explorer: {{ deployedOracleAddress }}</a
           >
         </div>
       </div>
