@@ -10,7 +10,7 @@ Before running this project, ensure you have:
    - Docker 26+
    - Node.js 18+
    - Install with: `npm install -g genlayer`
-   - Start with: `genlayer init`
+   - Start with: `genlayer init --branch v0.21.1`
 
 ## Project Components
 
