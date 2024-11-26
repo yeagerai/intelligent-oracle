@@ -174,7 +174,7 @@ const formatMessage = (content: string) => {
               icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
               icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
             "
-            class="msg-btn deploy-btn bg-highlight border border-highlight"
+            class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
           >
             {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
           </button>
@@ -183,7 +183,7 @@ const formatMessage = (content: string) => {
             :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
             target="_blank"
             class="msg-btn px-4 py-1"
-            >See it in the explorer</a
+            >View in the explorer: {{ deployedOracleAddress }}</a
           >
         </div>
       </div>
@@ -211,14 +211,21 @@ const formatMessage = (content: string) => {
       </div>
 
       <div class="mt-8">
-        <form @submit="sendMessage">
+        <form @submit="sendMessage" class="fixed bottom-0 flex gap-2 w-full max-w-md mb-8">
           <input
             ref="inputRef"
-            class="fixed bottom-0 w-full max-w-md p-4 mb-8 border border-highlight rounded-xl shadow-xl bg-background text-primary-text placeholder-secondary-text"
+            class="flex-1 p-4 border border-highlight rounded-xl shadow-xl bg-background text-primary-text placeholder-secondary-text"
             v-model="input"
             placeholder="Say something..."
             :disabled="disabled"
           />
+          <button
+            type="submit"
+            :disabled="disabled"
+            class="px-4 py-2 bg-highlight text-white rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Send
+          </button>
         </form>
       </div>
     </div>

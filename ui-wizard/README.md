@@ -1,8 +1,8 @@
-# GenLayer Intelligent Oracle Configuration Wizard
+# GenLayer Intelligent Oracle Assistant
 
 ## Overview
 
-This project implements a chatbot wizard to assist developers in configuring intelligent oracles for the GenLayer blockchain protocol. The wizard guides users through the process of setting up AI-powered prediction markets using GenLayer's Intelligent Contracts platform.
+This project implements a whitelabel AI Assistant to help your users create Intelligent Oracles for your project. The assistant guides users through a step by step process of creating a well-defined oracle specification which can be deployed on the GenLayer blockchain.
 
 ## Features
 
@@ -28,13 +28,7 @@ This project implements a chatbot wizard to assist developers in configuring int
    npm install
    ```
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add:
-   ```
-   NUXT_PUBLIC_CHAT_API_URL=your_chat_api_url_here
-   NUXT_PUBLIC_BRIDGE_API_URL=your_bridge_api_url_here
-   NUXT_PUBLIC_EXPLORER_URL=your_explorer_url_here
-   ```
-
+   Copy the `.env.example` file in the root directory to `.env` and add your own values.
 ## Configuration
 
 The project uses Nuxt.js configuration. Key settings can be found in `nuxt.config.ts`.

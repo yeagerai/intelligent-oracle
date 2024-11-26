@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-900">
+  <div class="min-h-screen bg-background text-primary-text">
     <header class="bg-white shadow">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-4">
@@ -9,13 +9,13 @@
           >
           &#9204;
           </router-link>
-          <h1 class="text-3xl font-bold text-gray-900">Oracle Details</h1>
+          <h1 class="text-3xl font-bold text-primary-text">Oracle Details</h1>
         </div>
         <div class="flex space-x-4">
-          <button @click="refreshOracle" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-            Refresh Oracle
+          <button @click="refreshOracle" class="px-4 py-2 border border-highlight text-highlight bg-white rounded hover:bg-highlight/10 transition-colors">
+            Refresh Data
           </button>
-          <button @click="openResolutionModal" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+          <button @click="openResolutionModal" class="px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
             Initiate Resolution
           </button>
         </div>
@@ -25,74 +25,81 @@
       <div v-if="oracle" class="flex space-x-6">
         <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
           <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">{{ oracle.title }}</h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-              <Address :address="oracle.address" />
+            <h3 class="text-lg leading-6 font-medium text-primary-text">{{ oracle.title }}</h3>
+            <p class="mt-1 max-w-2xl text-sm text-secondary-text">
+              <Address :address="oracle.address" :showFull="true" />
             </p>
           </div>
           <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
             <dl class="sm:divide-y sm:divide-gray-200">
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Description</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ oracle.description }}</dd>
+                <dt class="text-sm font-medium text-secondary-text">Status</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                  <span :class="{
+                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium': true,
+                    'bg-highlight/20 text-highlight': oracle.status === 'Active',
+                    'bg-green-100 text-green-800': oracle.status === 'Resolved',
+                    'bg-red-100 text-red-800': oracle.status === 'Error'
+                  }">
+                    {{ oracle.status }}
+                  </span>
+                </dd>
+              </div>
+              <div v-if="oracle.outcome" class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-secondary-text">Outcome</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.outcome || 'Not yet determined' }}</dd>
+              </div>
+              
+              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt class="text-sm font-medium text-secondary-text">Description</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.description }}</dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Potential Outcomes</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                <dt class="text-sm font-medium text-secondary-text">Potential Outcomes</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
                   <ul class="list-disc pl-5">
                     <li v-for="outcome in oracle.potential_outcomes" :key="outcome">{{ outcome }}</li>
                   </ul>
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Rules</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                <dt class="text-sm font-medium text-secondary-text">Rules</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
                   <ul class="list-disc pl-5">
                     <li v-for="rule in oracle.rules" :key="rule">{{ rule }}</li>
                   </ul>
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Data Sources Domains:</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <ul v-if="oracle.data_sources_domains.length > 0" class="list-disc pl-5">
-                    <li v-for="domain in oracle.data_sources_domains" :key="domain">{{ domain }}</li>
+                <dt class="text-sm font-medium text-secondary-text">Data Source Domains:</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                  <ul v-if="oracle.data_source_domains.length > 0" class="list-disc pl-5">
+                    <li v-for="domain in oracle.data_source_domains" :key="domain">{{ domain }}</li>
                   </ul>
-                  <div v-else>No data sources domains available</div>
+                  <div v-else>This oracle uses fixed resolution URLs</div>
                 </dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Resolution URLs:</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                <dt class="text-sm font-medium text-secondary-text">Resolution URLs:</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
                   <ul v-if="oracle.resolution_urls && oracle.resolution_urls.length > 0" class="list-disc pl-5">
                     <li v-for="url in oracle.resolution_urls" :key="url">{{ url }}</li>
                   </ul>
-                  <div v-else>No resolution URLs available</div>
+                  <div v-else>This oracle uses dynamic evidence URLs</div>
                 </dd>
               </div>
+
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Status</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <span :class="oracle.status === 'Active' ? 'text-green-600' : 'text-yellow-600'">
-                    {{ oracle.status }}
-                  </span>
-                </dd>
+                <dt class="text-sm font-medium text-secondary-text">Earliest Resolution Date</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ formatDate(oracle.earliest_resolution_date) }}</dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Outcome</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ oracle.outcome || 'Not yet determined' }}</dd>
+                <dt class="text-sm font-medium text-secondary-text">Prediction Market ID</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.prediction_market_id }}</dd>
               </div>
               <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Earliest Resolution Date</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ formatDate(oracle.earliest_resolution_date) }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Prediction Market ID</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ oracle.prediction_market_id }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Analysis</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                <dt class="text-sm font-medium text-secondary-text">Analysis</dt>
+                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
                   <div v-if="oracle.analysis" class="whitespace-pre-wrap break-words">
                     <div v-if="oracle.analysis.justification || oracle.analysis.reasoning">{{ oracle.analysis.justification || oracle.analysis.reasoning }}</div>
                     <div v-else>No analysis available</div>
@@ -100,45 +107,18 @@
                   <div v-else>No analysis available</div>
                 </dd>
               </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Additional Sources</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <div v-if="oracle.analysis?.metadata?.additional_source" class="whitespace-pre-wrap break-words">
-                    {{ oracle.analysis.metadata.additional_source }}
-                  </div>
-                  <div v-else>No additional sources available</div>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Assumptions</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <div v-if="oracle.analysis?.metadata?.assumptions" class="whitespace-pre-wrap break-words">
-                    {{ oracle.analysis.metadata.assumptions }}
-                  </div>
-                  <div v-else>No assumptions available</div>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-gray-500">Confidence Level</dt>
-                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <div v-if="oracle.analysis?.metadata?.confidenceLevel" class="whitespace-pre-wrap break-words">
-                    {{ oracle.analysis.metadata.confidenceLevel }}
-                  </div>
-                  <div v-else>No confidence level available</div>
-                </dd>
-              </div>
             </dl>
           </div>
         </div>
         <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
           <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Transactions</h3>
+            <h3 class="text-lg leading-6 font-medium text-primary-text">Transactions</h3>
           </div>
           <div class="border-t border-gray-200">
             <ul class="divide-y divide-gray-200">
               <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4 cursor-pointer hover:bg-gray-50" @click="openTransactionModal(tx)">
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-medium text-indigo-600 truncate">
+                  <p class="text-sm font-medium text-highlight truncate">
                     {{ tx.hash }}
                   </p>
                   <div class="ml-2 flex-shrink-0 flex">
@@ -148,19 +128,21 @@
                   </div>
                 </div>
                 <div class="mt-2">
-                  <p class="text-sm text-gray-600">Created at: {{ formatDate(tx.created_at) }}</p>
-                  <p class="text-sm text-gray-600">Nonce: {{ tx.nonce }}</p>
-                  <h4 class="text-sm font-medium text-gray-900 mt-2">Validators and Votes:</h4>
-                  <template v-if="tx.consensus_data && Object.entries(tx.consensus_data.votes).length > 0">
-                    <ul class="mt-1 space-y-1">
-                      <li v-for="validator in Object.entries(tx.consensus_data.votes)" :key="validator[0]" class="text-sm text-gray-600">
-                        {{ validator[0] }}: {{ tx.consensus_data.votes[validator[0]] || 'No vote' }}
-                      </li>
-                    </ul>
-                  </template>
-                  <template v-else>
-                    <p class="mt-1 text-sm text-gray-600">Leader only execution</p>
-                  </template>
+                  <p class="text-sm text-secondary-text">Created at: {{ formatDate(tx.created_at) }}</p>
+                  <p class="text-sm text-secondary-text">Nonce: {{ tx.nonce }}</p>
+                  <div v-if="tx.status !== 'PENDING'">
+                    <h4 class="text-sm font-medium text-primary-text mt-2">Validators and Votes:</h4>
+                    <template v-if="tx.consensus_data && Object.entries(tx.consensus_data.votes).length > 0">
+                      <ul class="mt-1 space-y-1">
+                        <li v-for="validator in Object.entries(tx.consensus_data.votes)" :key="validator[0]" class="text-sm text-secondary-text">
+                          {{ validator[0] }}: {{ tx.consensus_data.votes[validator[0]] || 'No vote' }}
+                        </li>
+                      </ul>
+                    </template>
+                    <template v-else>
+                      <p class="mt-1 text-sm text-secondary-text">Leader only execution</p>
+                    </template>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -168,7 +150,7 @@
         </div>
       </div>
       <div v-else class="text-center py-8">
-        <p class="text-xl text-gray-600">Loading oracle details...</p>
+        <p class="text-xl text-secondary-text">Loading oracle details...</p>
       </div>
     </main>
 
@@ -176,7 +158,7 @@
     <div v-if="showTransactionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeTransactionModal">
       <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3 text-center">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">Transaction Details</h3>
+          <h3 class="text-lg leading-6 font-medium text-primary-text">Transaction Details</h3>
           <div class="mt-2 px-7 py-3">
             <pre class="text-left whitespace-pre-wrap break-words">{{ prettyJson }}</pre>
           </div>
@@ -189,7 +171,7 @@
             </button>
             <button
               @click="closeTransactionModal"
-              class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              class="px-4 py-2 bg-highlight text-white text-base font-medium rounded-md w-full shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-highlight"
             >
               Close
             </button>
@@ -201,7 +183,7 @@
     <div v-if="showResolutionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeModal">
       <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3 text-center">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">Provide a URL for resolution</h3>
+          <h3 class="text-lg leading-6 font-medium text-primary-text">Provide a URL for resolution</h3>
           <div class="mt-2 px-7 py-3">
             <input v-model="resolutionEvidence" type="text" class="w-full h-12 border border-gray-300 rounded-md p-2" placeholder="Enter evidence URL">
           </div>
@@ -214,7 +196,7 @@
             </button>
             <button
               @click="closeResolutionModal"
-              class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              class="px-4 py-2 bg-highlight text-white text-base font-medium rounded-md w-full shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-highlight"
             >
               Close
             </button>
@@ -230,7 +212,7 @@ import { useRoute } from 'vue-router';
 import { Oracle, useGenlayerStore } from '../stores/genlayerStore';
 
 import Address from './Address.vue';
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, onUnmounted } from 'vue';
 import { Address as AddressType } from 'genlayer-js/types';
 
 const route = useRoute();
@@ -302,9 +284,20 @@ const showTransactionModal = ref(false);
 const selectedTransaction = ref<Transaction | null>(null);
 const showResolutionModal = ref(false);
 const resolutionEvidence = ref<string>("");
+const refreshInterval = ref<number>();
 
 onMounted(async () => {
-  await loadOracle();
+  loadOracle();
+  await refreshOracle();
+  refreshInterval.value = window.setInterval(async () => {
+    await refreshOracle();
+  }, 5000);
+});
+
+onUnmounted(() => {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value);
+  }
 });
 
 async function loadOracle() {
@@ -325,7 +318,7 @@ async function refreshOracle() {
 
 async function resolveOracle() {
   await genlayerStore.resolveOracle(route.params.address as AddressType, resolutionEvidence.value);
-  await loadOracle();
+  await refreshOracle();
   await closeResolutionModal();
 }
 

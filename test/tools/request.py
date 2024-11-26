@@ -8,6 +8,8 @@ from eth_account import Account
 
 from tools.transactions import sign_transaction, encode_transaction_data
 
+import tools.calldata as calldata
+
 load_dotenv()
 
 
@@ -22,9 +24,9 @@ def payload(function_name: str, *args) -> dict:
 
 def post_request(
     payload: dict,
-    protocol: str = os.environ.get("RPCPROTOCOL"),
-    host: str = os.environ.get("RPCHOST"),
-    port: str = os.environ.get("RPCPORT"),
+    protocol: str = os.environ["RPCPROTOCOL"],
+    host: str = os.environ["RPCHOST"],
+    port: str = os.environ["RPCPORT"],
 ):
     return requests.post(
         protocol + "://" + host + ":" + port + "/api",
@@ -39,14 +41,14 @@ def post_request_localhost(payload: dict):
 
 def get_transaction_by_hash(transaction_hash: str):
     payload_data = payload("eth_getTransactionByHash", transaction_hash)
-    raw_response = post_request(payload_data)
+    raw_response = post_request_localhost(payload_data)
     parsed_raw_response = raw_response.json()
     return parsed_raw_response["result"]
 
 
 def get_transaction_count(account_address: str):
     payload_data = payload("eth_getTransactionCount", account_address)
-    raw_response = post_request(payload_data)
+    raw_response = post_request_localhost(payload_data)
     parsed_raw_response = raw_response.json()
     return parsed_raw_response["result"]
 
@@ -57,9 +59,10 @@ def call_contract_method(
     method_name: str,
     method_args: list,
 ):
-    params_as_string = json.dumps(method_args)
-    encoded_data = encode_transaction_data([method_name, params_as_string])
-    method_response = post_request(
+    encoded_data = encode_transaction_data(
+        [calldata.encode({"method": method_name, "args": method_args})]
+    )
+    method_response = post_request_localhost(
         payload(
             "eth_call",
             {
@@ -68,8 +71,8 @@ def call_contract_method(
                 "data": encoded_data,
             },
         )
-    )
-    return method_response.json()["result"]
+    ).json()
+    return method_response["result"]
 
 
 def send_transaction(
@@ -82,10 +85,9 @@ def send_transaction(
     call_data = (
         None
         if method_name is None and method_args is None
-        else [method_name, json.dumps(method_args)]
+        else [calldata.encode({"method": method_name, "args": method_args})]
     )
     nonce = get_transaction_count(account.address)
-
     signed_transaction = sign_transaction(
         account, call_data, contract_address, value, nonce
     )
@@ -93,10 +95,13 @@ def send_transaction(
 
 
 def deploy_intelligent_contract(
-    account: Account, contract_code: str, constructor_params: str
+    account: Account, contract_code: str, method_args: list
 ) -> tuple[str, dict]:
-    deploy_data = [contract_code, constructor_params]
     nonce = get_transaction_count(account.address)
+    deploy_data = [
+        contract_code,
+        calldata.encode({"method": "__init__", "args": method_args}),
+    ]
     signed_transaction = sign_transaction(account, deploy_data, nonce=nonce)
     result = send_raw_transaction(signed_transaction)
     contract_address = result["data"]["contract_address"]
@@ -105,7 +110,7 @@ def deploy_intelligent_contract(
 
 def send_raw_transaction(signed_transaction: str):
     payload_data = payload("eth_sendRawTransaction", signed_transaction)
-    raw_response = post_request(payload_data)
+    raw_response = post_request_localhost(payload_data)
     call_method_response = raw_response.json()
     transaction_hash = call_method_response["result"]
 

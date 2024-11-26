@@ -9,9 +9,11 @@ from backend.node.genvm.icontract import IContract
 from backend.node.genvm.equivalence_principle import (
     call_llm_with_principle,
     get_webpage_with_principle,
+    EquivalencePrinciple,
 )
 from enum import Enum
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 
 class Status(Enum):
@@ -32,10 +34,10 @@ class IntelligentOracle(IContract):
         ),
         title: str,
         description: str,
-        potential_outcomes: str,
-        rules: str,
-        data_source_domains: str,  # List of domains for valid data sources.
-        resolution_urls: str,  # List of URL to resolve the prediction.
+        potential_outcomes: list,
+        rules: list,
+        data_source_domains: list,  # List of domains for valid data sources.
+        resolution_urls: list,  # List of URL to resolve the prediction.
         earliest_resolution_date: (
             str  # Minimum date and time when the oracle can be resolved
         ),
@@ -58,9 +60,7 @@ class IntelligentOracle(IContract):
                 "Cannot provide both resolution URLs and data source domains."
             )
 
-        self.potential_outcomes = [
-            outcome.strip() for outcome in potential_outcomes.split(",")
-        ]
+        self.potential_outcomes = [outcome.strip() for outcome in potential_outcomes]
 
         if len(self.potential_outcomes) < 2:
             raise ValueError("At least two potential outcomes are required.")
@@ -72,18 +72,17 @@ class IntelligentOracle(IContract):
         self.title = title
         self.description = description
 
-        self.rules = [rule.strip() for rule in rules.split(",")]
+        self.rules = [rule.strip() for rule in rules]
         self.data_source_domains = [
             datasource.strip()
+            .lower()
             .replace("http://", "")
             .replace("https://", "")
             .replace("www.", "")
-            for datasource in data_source_domains.split(",")
+            for datasource in data_source_domains
             if datasource.strip()
         ]
-        self.resolution_urls = [
-            url.strip() for url in resolution_urls.split(",") if url.strip()
-        ]
+        self.resolution_urls = [url.strip() for url in resolution_urls if url.strip()]
 
         # Parse earliest_resolution_date with timezone info
         self.earliest_resolution_date = datetime.fromisoformat(earliest_resolution_date)
@@ -96,15 +95,19 @@ class IntelligentOracle(IContract):
         self.status = Status.ACTIVE
         self.analysis = None
         self.outcome = None
+        self.creator = contract_runner.from_address
 
-    async def _check_evidence(self, evidenze: str):
-        if evidenze in self.data_source_domains:
-            return True
-
-        if any(data_source in evidenze for data_source in self.data_source_domains):
-            return True
-
-        return False
+    async def _check_evidence(self, evidence: str):
+        try:
+            # Parse the evidence URL
+            parsed_url = urlparse(evidence)
+            evidence_domain = parsed_url.netloc.lower().replace('www.', '')
+            
+            # Compare with allowed domains (which are already normalized)
+            return evidence_domain in self.data_source_domains
+            
+        except Exception:
+            return False
 
     async def resolve(self, evidence_url: str = ""):
         if self.status == Status.RESOLVED:
@@ -136,178 +139,204 @@ class IntelligentOracle(IContract):
             self.resolution_urls if len(self.resolution_urls) > 0 else [evidence_url]
         )
 
+        
+                
         for resource_url in resources_to_check:
-            resource_web_data = await get_webpage_with_principle(
-                resource_url, "Web page data should coincide"
-            )
-            print(resource_web_data)
+            result_dict = {}
+            async with EquivalencePrinciple(
+                result=result_dict,
+                principle="`outcome` field must be exactly the same. All other fields must be similar",
+                comparative=True,
+            ) as eq:
+                resource_web_data = await eq.get_webpage(resource_url, "text") 
+                print(resource_web_data)
 
-            task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. 
-            Your goal is to determine the correct outcome based on the user-defined rules, 
-            the provided webpage HTML content, the resolution date, and the list of potential outcomes.
+                task = f"""
+You are an AI Validator tasked with resolving a prediction market. 
+Your goal is to determine the correct outcome based on the user-defined rules, 
+the provided webpage HTML content, the resolution date, and the list of potential outcomes.
 
-            ### **Inputs:**
-            1. **Rules (Natural Language):**
-            ```
-            {self.rules}
-            ```
+### Inputs
+<title>
+{self.title}
+</title>
 
-            2. **Webpage HTML Content:**
-            ```
-            The following URL was used to provide resolution: {resource_url}
-            Content extracted from the webpage:
-            {resource_web_data}
-            ```
+<description>
+{self.description}
+</description>
 
-            3. **Resolution Date:**
-            ```
-            {self.earliest_resolution_date}
-            ```
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
 
-            4. **Potential Outcomes:**
-            ```
-            {self.potential_outcomes}
-            ```
-         
+<rules>
+{self.rules}
+</rules>
 
-            ### **Your Task:**
-            1. **Analyze the Inputs:**
-            - Carefully read and interpret the user-defined rules.
-            - Parse the HTML content to extract meaningful information relevant to the rules.
-            - Consider the resolution date in your analysis to ensure timeliness of the data.
+<source_url>
+{resource_url}
+</source_url>
 
-            2. **Determine Your Vote:**
-            - Based on your analysis, decide which potential outcome is correct.
-            - If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, your output vote should be `null`.
+<webpage_content>
+{resource_web_data}
+</webpage_content>
 
-            3. **Provide Reasoning:**
-            - Write a clear, self-contained reasoning for your vote.
-            - Reference specific parts of the rules and the extracted data that support your decision.
-            - Ensure that someone reading the reasoning can understand it without needing additional information.
+<current_date>
+{datetime.now().astimezone()}
+</current_date>
 
-            4. **Include Metadata:**
-            - Add additional useful metadata, such as:
-            - Confidence level (e.g., High, Medium, Low).
-            - Any assumptions made during your analysis.
-            - Relevant URLs or sources extracted from the HTML content.
+<earliest_resolution_date>
+{self.earliest_resolution_date}
+</earliest_resolution_date>
 
 
-            ### **Output Format:**
 
-            Provide your response in **valid JSON** format with the following structure:
 
-            ```json
-            {{
-                "vote": "Chosen outcome from the potential outcomes list or `null` if undetermined",
-                "reasoning": "Your detailed reasoning here.",
-                "metadata": {{
-                    "confidenceLevel": "High | Medium | Low",
-                    "assumptions": "Any assumptions you made during analysis.",
-                    "additionalSources": ["List of relevant URLs or sources, if any."]
-                }}
-            }}
-            ```
+### **Your Task:**
+1. **Analyze the Inputs:**
+- Carefully read and interpret the user-defined rules.
+- Parse the HTML content to extract meaningful information relevant to the rules.
+- Determine if the source pertains to the event that is being predicted.
+- Determine if the event has occurred yet.
 
-            ### **Constraints and Considerations:**
+2. **Provide Reasoning:**
+- Write a clear, self-contained reasoning for the outcome.
+- Reference specific parts of the rules and the extracted data that support your decision.
+- Ensure that someone reading the reasoning can understand it without needing additional information.
 
-            - **Accuracy:** Base your decision strictly on the provided inputs.
-            - **Objectivity:** Remain neutral and unbiased.
-            - **Clarity:** Make sure your reasoning is easy to understand.
-            - **Validity:** Ensure the JSON output is properly formatted and free of errors. It should be parseable by Python.
-            """
-            result = await call_llm_with_principle(
-                task,
-                "`vote` field must be exactly the same. All other fields must be similar",
-            )
-            result_dict = _parse_json_dict(result)
-            analyzed_outputs.append(result_dict)
+3. **Determine The Outcome:**
+- Based on your analysis, decide which potential outcome is correct.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
+- If the information is insufficient or inconclusive, or the event has not occurred yet, and you cannot confidently determine an outcome based on this source, the outcome should be `UNDETERMINED`.
+
+
+
+
+### **Output Format:**
+
+Provide your response in **valid JSON** format with the following structure:
+
+```json
+{{
+    "valid_source": "true | false",
+    "event_has_occurred": "true | false",
+    "reasoning": "Your detailed reasoning here",
+    "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if no outcome can be determined based on this source, `ERROR` if the outcome is not in the potential outcomes list"                
+}}
+```
+
+### **Constraints and Considerations:**
+
+- **Accuracy:** Base your decision strictly on the provided inputs.
+- **Objectivity:** Remain neutral and unbiased.
+- **Clarity:** Make sure your reasoning is easy to understand.
+- **Validity:** Ensure the JSON output is properly formatted and free of errors. Do not include trailing commas.
+                """
+                result = await eq.call_llm(task)
+                print(result)
+                result_dict = _parse_json_dict(result)
+                eq.set(analyzed_outputs)
+            
+            analyzed_outputs.append((resource_url, result_dict))
 
         # Gather all results to form one final decision
 
-        task = f"""You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine 
-        the correct outcome based on processed data from other AI Validators for many data sources. Here are your inputs
+        task = f"""
+You are an AI Validator tasked with resolving a prediction market Oracle. Your goal is to determine 
+the correct outcome based on processed data from all of the individial data sources. Here are your inputs
 
-        ### **Inputs:**
-        1. **Rules (Natural Language):**
-        ```
-        {self.rules}
-        ```
+### Inputs
+<title>
+{self.title}
+</title>
 
-        2. **Processed data from AI Validators:**
-        ```
-        {analyzed_outputs}
-        ```
+<description>
+{self.description}
+</description>
 
-        3. **Resolution Date:**
-        ```
-        {self.earliest_resolution_date}
-        ```
+<potential_outcomes>
+{self.potential_outcomes}
+</potential_outcomes>
 
-        4. **Potential Outcomes:**
-        ```
-        {self.potential_outcomes}
-        ```
+<rules>
+{self.rules}
+</rules>
 
-        ### **Your Task:**
-        1. **Analyze the Inputs:**
-        - Carefully read and interpret the user-defined rules.
-        - Take into account all the processed data form the other AI Validators.
-        - Consider the resolution date in your analysis to ensure timeliness of the data.
+<processed_data>
+{analyzed_outputs}
+</processed_data>
 
-        2. **Determine Your Vote:**
-        - The output should be determined mainly from the processed data form the other AI Validators.
-        - Based on your analysis, decide which potential outcome is correct.
-        - Your response should reflect a coherent summary outcome from the previous analysis.
+<current_date>
+{datetime.now().astimezone()}
+</current_date>
 
-        ### **Output Format:**
+<earliest_resolution_date>
+{self.earliest_resolution_date}
+</earliest_resolution_date>
 
-        Provide your response in **valid JSON** format with the following structure:
+### **Your Task:**
+1. **Analyze the Inputs:**
+- Carefully read and interpret the user-defined rules.
+- Take into account all the processed data form the sources.
+- Consider the resolution date in your analysis to ensure timeliness of the data.
 
-        ```json
-        {{
-        "vote": "Chosen outcome from the potential outcomes list or `null` if undetermined",
-        "reasoning": "Your detailed reasoning here.",
-        "metadata": {{
-                "confidenceLevel": "High | Medium | Low",
-                "assumptions": "Any assumptions you made during analysis.",
-                "additionalSources": ["List of relevant URLs or sources, if any."]
-            }}
-        }}
-        ```
+2. **Determine The Outcome:**
+- The output should be determined from the processed data form the resolution sources.
+- Based on your analysis, decide which potential outcome is correct.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
+- If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, the outcome should be `UNDETERMINED`.
+- Your response should reflect a coherent summary outcome from the previous analysis.
+- If multiple sources contradict each other, refer to the rules to determine how to resolve the contradiction.
+- If the rules do not provide a clear resolution, the outcome should be `ERROR`.
 
-        ### **Constraints and Considerations:**
+### **Output Format:**
 
-        - **Accuracy:** Base your decision strictly on the provided inputs.
-        - **Objectivity:** Remain neutral and unbiased.
-        - **Clarity:** Make sure your reason is easy to understand.
-        - **Validity:** Ensure the JSON output is properly formatted and free of errors.
+Provide your response in **valid JSON** format with the following structure:
+
+```json
+{{
+"relevant_sources": "List of URLs that are relevant to the outcome",
+"reasoning": "Your detailed reasoning here",
+"outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list"        
+}}
+```
+
+### **Constraints and Considerations:**
+
+- **Accuracy:** Base your decision strictly on the provided inputs.
+- **Objectivity:** Remain neutral and unbiased.
+- **Clarity:** Make sure your reason is easy to understand.
+- **Validity:** Ensure the JSON output is properly formatted and free of errors. Do not include trailing commas.
 
         """
 
         result = await call_llm_with_principle(
             task,
-            "`vote` field must be exactly the same. All other fields must be similar",
+            "`outcome` field must be exactly the same. All other fields must be similar",
         )
+        print(result)
         result_dict = _parse_json_dict(result)
         self.analysis = result_dict
 
-        if (
-            result_dict["vote"] is None
-            or result_dict["vote"] not in self.potential_outcomes
-        ):
+        if result_dict["outcome"] == "UNDETERMINED":
+            # Not enough information to determine the outcome, keep the oracle active
+            return
+        
+        if result_dict["outcome"] == "ERROR" or result_dict["outcome"] not in self.potential_outcomes:
             self.status = Status.ERROR
             return
 
-        self.outcome = result_dict["vote"]
+        self.outcome = result_dict["outcome"]
         self.status = Status.RESOLVED
 
     def get_dict(self) -> dict[str]:
         return {
+            "creator": self.creator,
             "title": self.title,
             "description": self.description,
             "potential_outcomes": self.potential_outcomes,
             "rules": self.rules,
-            "data_sources_domains": self.data_source_domains,
+            "data_source_domains": self.data_source_domains,
             "resolution_urls": self.resolution_urls,
             "status": self.status.value,
             "earliest_resolution_date": self.earliest_resolution_date.isoformat(),
@@ -323,9 +352,15 @@ class IntelligentOracle(IContract):
 def _parse_json_dict(json_str: str) -> dict:
     """
     Used to sanitize the JSON output from the LLM.
-    Remove everything before the first '{' and after the last '}'
+    Remove everything before the first '{' and after the last '}', and remove trailing commas before closing braces/brackets
     """
     first_brace = json_str.find("{")
     last_brace = json_str.rfind("}")
     json_str = json_str[first_brace : last_brace + 1]
+
+    # Remove trailing commas before closing braces/brackets
+    import re
+    json_str = re.sub(r',(?!\s*?[\{\[\"\'\w])', '', json_str)
+    print(json_str)
+
     return json.loads(json_str)
