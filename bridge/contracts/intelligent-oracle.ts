@@ -1,6 +1,7 @@
+export const intelligentOracleCode = `
 """
 Temporary solutions:
-- `global` imports are done in weird places given current limitations on how imports work in GenVM.
+- 'global' imports are done in weird places given current limitations on how imports work in GenVM.
 - we don't use a factory since we cannot deploy new contracts from a contract
 """
 
@@ -145,7 +146,7 @@ class IntelligentOracle(IContract):
             result_dict = {}
             async with EquivalencePrinciple(
                 result=result_dict,
-                principle="`outcome` field must be exactly the same. All other fields must be similar",
+                principle="'outcome' field must be exactly the same. All other fields must be similar",
                 comparative=True,
             ) as eq:
                 resource_web_data = await eq.get_webpage(resource_url, "text") 
@@ -206,8 +207,8 @@ the provided webpage HTML content, the resolution date, and the list of potentia
 
 3. **Determine The Outcome:**
 - Based on your analysis, decide which potential outcome is correct.
-- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
-- If the information is insufficient or inconclusive, or the event has not occurred yet, and you cannot confidently determine an outcome based on this source, the outcome should be `UNDETERMINED`.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be 'ERROR'.
+- If the information is insufficient or inconclusive, or the event has not occurred yet, and you cannot confidently determine an outcome based on this source, the outcome should be 'UNDETERMINED'.
 
 
 
@@ -216,14 +217,14 @@ the provided webpage HTML content, the resolution date, and the list of potentia
 
 Provide your response in **valid JSON** format with the following structure:
 
-```json
+\`\`\`json
 {{
     "valid_source": "true | false",
     "event_has_occurred": "true | false",
     "reasoning": "Your detailed reasoning here",
-    "outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if no outcome can be determined based on this source, `ERROR` if the outcome is not in the potential outcomes list"                
+    "outcome": "Chosen outcome from the potential outcomes list, 'UNDETERMINED' if no outcome can be determined based on this source, 'ERROR' if the outcome is not in the potential outcomes list"                
 }}
-```
+\`\`\`
 
 ### **Constraints and Considerations:**
 
@@ -283,23 +284,23 @@ the correct outcome based on processed data from all of the individial data sour
 2. **Determine The Outcome:**
 - The output should be determined from the processed data form the resolution sources.
 - Based on your analysis, decide which potential outcome is correct.
-- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be `ERROR`.
-- If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, the outcome should be `UNDETERMINED`.
+- If an outcome can be determined, but the outcome is not in the list of potential outcomes, the outcome should be 'ERROR'.
+- If the information is insufficient or inconclusive, and you cannot confidently determine an outcome, the outcome should be 'UNDETERMINED'.
 - Your response should reflect a coherent summary outcome from the previous analysis.
 - If multiple sources contradict each other, refer to the rules to determine how to resolve the contradiction.
-- If the rules do not provide a clear resolution, the outcome should be `ERROR`.
+- If the rules do not provide a clear resolution, the outcome should be 'ERROR'.
 
 ### **Output Format:**
 
 Provide your response in **valid JSON** format with the following structure:
 
-```json
+\`\`\`json
 {{
 "relevant_sources": "List of URLs that are relevant to the outcome",
 "reasoning": "Your detailed reasoning here",
-"outcome": "Chosen outcome from the potential outcomes list, `UNDETERMINED` if undetermined, `ERROR` if the outcome is not in the potential outcomes list"        
+"outcome": "Chosen outcome from the potential outcomes list, 'UNDETERMINED' if undetermined, 'ERROR' if the outcome is not in the potential outcomes list"        
 }}
-```
+\`\`\`
 
 ### **Constraints and Considerations:**
 
@@ -312,7 +313,7 @@ Provide your response in **valid JSON** format with the following structure:
 
         result = await call_llm_with_principle(
             task,
-            "`outcome` field must be exactly the same. All other fields must be similar",
+            "'outcome' field must be exactly the same. All other fields must be similar",
         )
         print(result)
         result_dict = _parse_json_dict(result)
@@ -364,3 +365,5 @@ def _parse_json_dict(json_str: str) -> dict:
     print(json_str)
 
     return json.loads(json_str)
+
+`;
