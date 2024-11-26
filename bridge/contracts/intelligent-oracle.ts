@@ -361,7 +361,7 @@ def _parse_json_dict(json_str: str) -> dict:
 
     # Remove trailing commas before closing braces/brackets
     import re
-    json_str = re.sub(r',(?!\s*?[\{\[\"\'\w])', '', json_str)
+    json_str = re.sub(r',(?!\\s*?[\\{\\[\\"\\'\\w])', '', json_str)
     print(json_str)
 
     return json.loads(json_str)
