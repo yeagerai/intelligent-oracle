@@ -4,7 +4,7 @@ import { defineNitroConfig } from "nitropack";
 export default defineNitroConfig({
   vercel: {
     functions: {
-      maxDuration: 15,
+      maxDuration: 30,
     },
   },
 });
