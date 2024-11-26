@@ -1,13 +1,17 @@
-from backend.node.genvm.icontract import IContract
+from genlayer import *
 
-
-class Registry(IContract):
+@gl.contract
+class Registry:
+    # Declare persistent storage fields
+    contract_addresses: DynArray[str]
 
     def __init__(self):
-        self.contract_addresses = []
+        self.contract_addresses = DynArray[str]()
 
-    def register_contract(self, contract_address: str):  # TODO: add permissioning
+    @gl.public.write
+    def register_contract(self, contract_address: str) -> None:  # TODO: add permissioning
         self.contract_addresses.append(contract_address)
 
+    @gl.public.view
     def get_contract_addresses(self) -> list[str]:
-        return self.contract_addresses
+        return list(self.contract_addresses)
