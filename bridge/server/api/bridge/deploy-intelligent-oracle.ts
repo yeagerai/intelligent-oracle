@@ -4,9 +4,6 @@ import { simulator } from "genlayer-js/chains";
 import { Address, TransactionStatus } from "genlayer-js/types";
 import { intelligentOracleCode } from "../../../contracts/intelligent-oracle";
 
-// Set max duration to 30 seconds in Vercel deployment
-export const maxDuration = 30;
-
 interface IntelligentOracleInput {
   predictionMarketId: string;
   title: string;
