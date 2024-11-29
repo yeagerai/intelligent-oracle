@@ -2,7 +2,7 @@ name: "CodeQL security scanning"
 
 on:
   push:
-    branches: main
+    branches: main, codeql # TODO: remove codeql branch after testing
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
   schedule:
