@@ -1,6 +1,8 @@
 name: "CodeQL security scanning"
 
 on:
+  push:
+    branches: main
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
   schedule:
