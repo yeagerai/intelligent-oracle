@@ -2,8 +2,7 @@ import { defineEventHandler, readBody } from "h3";
 import { createAccount, createClient } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { Address, TransactionStatus } from "genlayer-js/types";
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { intelligentOracleCode } from "../../../contracts/intelligent-oracle";
 
 interface IntelligentOracleInput {
   predictionMarketId: string;
@@ -16,12 +15,7 @@ interface IntelligentOracleInput {
   earliestResolutionDate: string;
 }
 
-const { bridgePrivateKey, simulatorUrl, icRegistryAddress, ioContractPath } = useRuntimeConfig();
-
-const intelligentOracleCode = readFileSync(
-  join(process.cwd(), ioContractPath),
-  'utf-8'
-);
+const { bridgePrivateKey, simulatorUrl, icRegistryAddress } = useRuntimeConfig();
 
 function validateInput(input: IntelligentOracleInput): string | null {
   const requiredFields: (keyof IntelligentOracleInput)[] = [
@@ -105,7 +99,10 @@ export default defineEventHandler(async (event) => {
     console.log("🚀 ~ Deploy Intelligent Contract ~ receipt:", receipt);
 
     // @ts-ignore
-    if (!receipt.consensus_data?.leader_receipt?.execution_result || receipt.consensus_data?.leader_receipt?.execution_result !== "SUCCESS") {
+    if (
+      !receipt.consensus_data?.leader_receipt?.execution_result ||
+      receipt.consensus_data?.leader_receipt?.execution_result !== "SUCCESS"
+    ) {
       return {
         status: "error",
         message: "Intelligent Oracle deployment failed",
