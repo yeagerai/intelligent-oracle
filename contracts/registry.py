@@ -1,4 +1,7 @@
+# { "Depends": "py-genlayer:test" }
+
 from genlayer import *
+
 
 @gl.contract
 class Registry:
@@ -6,10 +9,12 @@ class Registry:
     contract_addresses: DynArray[str]
 
     def __init__(self):
-        self.contract_addresses = DynArray[str]()
+        pass
 
     @gl.public.write
-    def register_contract(self, contract_address: str) -> None:  # TODO: add permissioning
+    def register_contract(
+        self, contract_address: str
+    ) -> None:  # TODO: add permissioning
         self.contract_addresses.append(contract_address)
 
     @gl.public.view
