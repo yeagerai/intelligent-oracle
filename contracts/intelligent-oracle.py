@@ -6,10 +6,12 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from genlayer import *
 
+
 class Status(Enum):
     ACTIVE = "Active"
     RESOLVED = "Resolved"
     ERROR = "Error"
+
 
 @gl.contract
 class IntelligentOracle:
@@ -69,7 +71,7 @@ class IntelligentOracle:
         self.title = title
         self.description = description
         for rule in rules:
-            self.rules.append(rule) 
+            self.rules.append(rule)
         for datasource in data_source_domains:
             self.data_source_domains.append(
                 datasource.strip()
@@ -83,7 +85,7 @@ class IntelligentOracle:
 
         self.earliest_resolution_date = earliest_resolution_date
         self.status = Status.ACTIVE.value
-        
+
         self.outcome = ""
         self.creator = gl.message.sender_account
 
@@ -91,7 +93,7 @@ class IntelligentOracle:
     def _check_evidence_domain(self, evidence: str) -> bool:
         try:
             parsed_url = urlparse(evidence)
-            evidence_domain = parsed_url.netloc.lower().replace('www.', '')
+            evidence_domain = parsed_url.netloc.lower().replace("www.", "")
             return evidence_domain in self.data_source_domains
         except Exception:
             return False
@@ -135,10 +137,11 @@ class IntelligentOracle:
         potential_outcomes = list(self.potential_outcomes)
         rules = list(self.rules)
         earliest_resolution_date = self.earliest_resolution_date
-                
+
         for resource_url in resources_to_check:
+
             def evaluate_single_source() -> str:
-                resource_web_data = gl.get_webpage(resource_url, mode="text") 
+                resource_web_data = gl.get_webpage(resource_url, mode="text")
                 print(resource_web_data)
 
                 task = f"""
@@ -225,14 +228,13 @@ Provide your response in **valid JSON** format with the following structure:
                 result = gl.exec_prompt(task)
                 print(result)
                 return result
-                
-            
+
             result = gl.eq_principle_prompt_comparative(
                 evaluate_single_source,
                 principle="`outcome` field must be exactly the same. All other fields must be similar",
             )
 
-            result_dict = _parse_json_dict(result)            
+            result_dict = _parse_json_dict(result)
             analyzed_outputs.append((resource_url, result_dict))
 
         def evaluate_all_sources() -> str:
@@ -319,8 +321,11 @@ Provide your response in **valid JSON** format with the following structure:
 
         if result_dict["outcome"] == "UNDETERMINED":
             return
-        
-        if result_dict["outcome"] == "ERROR" or result_dict["outcome"] not in self.potential_outcomes:
+
+        if (
+            result_dict["outcome"] == "ERROR"
+            or result_dict["outcome"] not in self.potential_outcomes
+        ):
             self.status = Status.ERROR.value
             return
 
@@ -360,7 +365,8 @@ def _parse_json_dict(json_str: str) -> dict:
 
     # Remove trailing commas before closing braces/brackets
     import re
-    json_str = re.sub(r',(?!\s*?[\{\[\"\'\w])', '', json_str)
+
+    json_str = re.sub(r",(?!\s*?[\{\[\"\'\w])", "", json_str)
     print(json_str)
 
     return json.loads(json_str)
