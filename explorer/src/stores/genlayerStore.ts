@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { createClient, createAccount as createGenLayerAccount, generatePrivateKey } from "genlayer-js";
+import { createClient, createAccount as createGenLayerAccount, generatePrivateKey, abi } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { ref, computed } from "vue";
 import { Address } from "genlayer-js/types";
@@ -63,14 +63,12 @@ export const useGenlayerStore = defineStore("genlayer", () => {
 
   async function refreshOracles() {
     const registryContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as Address;
-    console.log("registryContractAddress", registryContractAddress);
     const contract_addresses: Address[] = await client.value.readContract({
       account: account.value,
       address: registryContractAddress,
-      functionName: "get_contract_addresses", 
+      functionName: "get_contract_addresses",
       args: [],
     });
-
     _oracles.value = await Promise.all(contract_addresses.map((address) => fetchOracle(address)));
   }
 
@@ -83,14 +81,14 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         functionName: "get_dict",
         args: [],
       })
-      .then((result) => ({ ...result, address }))
+      .then((result) => ({ ...Object.fromEntries(result), address }))
       .catch((error) => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
 
     // Update the oracle in the store if it exists
-    const existingIndex = _oracles.value.findIndex(o => o.address === address);
+    const existingIndex = _oracles.value.findIndex((o) => o.address === address);
     if (existingIndex >= 0) {
       _oracles.value[existingIndex] = oracle;
     }
