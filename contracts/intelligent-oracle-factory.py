@@ -1,5 +1,72 @@
 # { "Depends": "py-genlayer:test" }
 
+from genlayer import *
+
+
+@gl.contract
+class Registry:
+    # Declare persistent storage fields
+    contract_addresses: DynArray[str]
+
+    def __init__(self):
+        pass
+
+    @gl.public.write
+    def create_new_prediction_market(
+        self,
+        prediction_market_id: str,
+        title: str,
+        description: str,
+        potential_outcomes: list[str],
+        rules: list[str],
+        data_source_domains: list[str],
+        resolution_urls: list[str],
+        earliest_resolution_date: str,
+    ) -> None:
+        registered_contracts = len(self.contract_addresses)
+        contract_address = gl.deploy_contract(
+            code=contract_code_template.encode("utf-8"),
+            args=[
+                prediction_market_id,
+                title,
+                description,
+                potential_outcomes,
+                rules,
+                data_source_domains,
+                resolution_urls,
+                earliest_resolution_date,
+            ],
+            salt_nonce=registered_contracts + 1,
+        )
+        print("contract_address", contract_address)
+        print("contract_address type", type(contract_address))
+        self.contract_addresses.append(contract_address.as_hex)
+
+    @gl.public.write
+    def assistant_create_prediction_market(self) -> None:
+        self.create_new_prediction_market(
+            prediction_market_id="0",
+            title="Spain vs Italy Euro 2024 Football Match",
+            description="Prediction market for the outcome of the Spain vs Italy football match in Euro 2024.",
+            rules=[
+                "The match result will be determined based on the official score at the end of regular time and any extra time, excluding penalty shootouts.",
+                "The outcome will be verified using official sources such as UEFA's website or other reputable sports news outlets.",
+            ],
+            data_source_domains=[],
+            resolution_urls=[
+                "https://www.bbc.com/sport/football/scores-fixtures/2024-06-20"
+            ],
+            earliest_resolution_date="2024-06-21",
+            potential_outcomes=["Spain Wins", "Italy Wins", "Draw"],
+        )
+
+    @gl.public.view
+    def get_contract_addresses(self) -> list[str]:
+        return list(self.contract_addresses)
+
+
+contract_code_template = '''# { "Depends": "py-genlayer:test" }
+
 import json
 from enum import Enum
 from datetime import datetime, timezone
@@ -368,3 +435,4 @@ def _parse_json_dict(json_str: str) -> dict:
     print(json_str)
 
     return json.loads(json_str)
+'''
