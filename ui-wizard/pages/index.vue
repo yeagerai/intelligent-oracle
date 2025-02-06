@@ -3,6 +3,14 @@ import { useRuntimeConfig } from "#app";
 import { useChat } from "@ai-sdk/vue";
 import { computed, ref, onMounted } from "vue";
 import confetti from "canvas-confetti";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-json";
+
+// Function to highlight JSON
+const highlightJson = (code: string) => {
+  return Prism.highlight(code, Prism.languages.json, "json");
+};
 
 enum DEPLOYMENT_STATUS {
   NONE = "NONE",
@@ -123,45 +131,77 @@ const deployIntelligentContract = async (jsonContent: string) => {
 };
 
 const formatMessage = (content: string) => {
-  const jsonRegex = /```json\n([\s\S]*?)```/g;
+  const jsonRegex = /```json\n([\s\S]*?)(?:```|$)/g;
   const match = jsonRegex.exec(content);
 
   if (!match) {
     return {
-      formattedContent: content,
-      jsonContent: null,
+      formattedContent: {
+        beforeJson: content,
+        afterJson: "",
+      },
     };
   }
 
   try {
+    // Split content into parts before and after the JSON block
+    const [beforeJson, ...afterJsonParts] = content.split(jsonRegex);
+    console.log("🚀 ~ formatMessage ~ beforeJson:", beforeJson);
+    const afterJson = afterJsonParts.slice(1).join("").trim();
+    console.log("🚀 ~ formatMessage ~ afterJson:", afterJson);
+
+    // Format the content with the JSON removed
+    const formattedContent = {
+      beforeJson: beforeJson.trim(),
+      afterJson: afterJson ? `\n${afterJson}` : "",
+    };
+
     const parsedJson = JSON.parse(match[1]);
-    const formattedContent = content.replace(
-      jsonRegex,
-      `<pre><code class="language-json">${JSON.stringify(parsedJson, null, 2)}</code></pre>`
-    );
+    const formattedJson = JSON.stringify(parsedJson, null, 2);
+    const highlightedJson = highlightJson(formattedJson);
 
     return {
       formattedContent,
       jsonContent: parsedJson,
+      highlightedJson,
     };
   } catch (e) {
+    const formattedContent = {
+      beforeJson: content.replace(
+        jsonRegex,
+        `<pre><code class="language-json">Generating JSON...</code></pre>`
+      ),
+      afterJson: "",
+    };
     return {
-      formattedContent: content,
-      jsonContent: null,
+      formattedContent,
     };
   }
 };
+
+const lastJsonMessageId = computed(() => {
+  for (let i = messages.value.length - 1; i >= 0; i--) {
+    if (formatMessage(messages.value[i].content).jsonContent) {
+      return messages.value[i].id;
+    }
+  }
+  return null;
+});
 </script>
 
 <template>
   <div class="min-h-screen bg-background">
-    <div class="flex flex-col w-full max-w-2xl py-24 mx-auto stretch text-primary-text font-sans">
+    <div class="flex flex-col w-full max-w-3xl py-24 mx-auto stretch text-primary-text font-sans">
       <div v-for="m in messages.slice(1)" :key="m.id" class="whitespace-pre-wrap mb-4">
         <span class="font-bold" :class="{ 'text-highlight': m.role !== 'user' }">{{
           m.role === "user" ? "You: " : "Intelligent Oracle Assistant: "
         }}</span>
-        <span v-html="formatMessage(m.content).formattedContent"> </span>
-        <div v-if="formatMessage(m.content).jsonContent" class="flex flex-col gap-2">
+        <span v-html="formatMessage(m.content).formattedContent.beforeJson"></span>
+        <div v-if="formatMessage(m.content).jsonContent" class="json-viewer-wrapper">
+          <pre><code class="language-json" v-html="formatMessage(m.content).highlightedJson"></code></pre>
+        </div>
+        <span v-html="formatMessage(m.content).formattedContent.afterJson"></span>
+        <div v-if="m.id === lastJsonMessageId" class="flex flex-col gap-2">
           <div class="flex gap-2">
             <button
               @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
@@ -333,6 +373,30 @@ code {
 @media (prefers-color-scheme: dark) {
   .bg-green-100 {
     background-color: rgba(6, 78, 59, 0.2);
+  }
+}
+
+.json-viewer-wrapper {
+  margin: 1em 0;
+}
+
+.json-viewer-wrapper pre {
+  margin: 0;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.json-viewer-wrapper code {
+  font-family: "Fira Code", monospace;
+  font-size: 0.9em;
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  .json-viewer-wrapper pre {
+    background-color: #f5f5f5;
   }
 }
 </style>
