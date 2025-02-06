@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2"
+  },
+  "dependencies": {
+    "@types/jszip": "^3.4.0",
+    "dotenv": "^16.4.7",
+    "genlayer-js": "^0.6.4",
+    "jszip": "^3.10.1"
+  },
+  "scripts": {
+    "deploy": "tsx deploy.ts"
+  }
+}
