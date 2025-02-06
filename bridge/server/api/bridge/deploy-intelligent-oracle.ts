@@ -93,23 +93,27 @@ export default defineEventHandler(async (event) => {
     });
     console.log("registerContractTransactionHash:", registerContractTransactionHash);
 
-    const receipt = await client.waitForTransactionReceipt({
+    const methodCallReceipt = await client.waitForTransactionReceipt({
       hash: registerContractTransactionHash,
-      status: TransactionStatus.ACCEPTED,
-      retries: 30,
-      interval: 10_000,
+      status: TransactionStatus.FINALIZED,
     });
 
-    return {
-      status: "success",
-      message: "Intelligent Oracle deployed successfully",
-      receipt,
-    };
+    if (methodCallReceipt.triggered_transactions.length > 0) {
+      const predictionMarketDeployTransactionHash = methodCallReceipt.triggered_transactions[0];
+      const predictionMarketDeployReceipt = await client.waitForTransactionReceipt({
+        hash: predictionMarketDeployTransactionHash,
+      });
+      return {
+        status: "success",
+        message: "Intelligent Oracle deployed successfully",
+        receipt: predictionMarketDeployReceipt,
+      };
+    }
   } catch (error) {
     console.error("Error deploying Intelligent Oracle:", error);
-    return {
-      status: "error",
-      message: "An error occurred while deploying the Intelligent Oracle",
-    };
   }
+  return {
+    status: "error",
+    message: "An error occurred while deploying the Intelligent Oracle",
+  };
 });
