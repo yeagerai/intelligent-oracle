@@ -1,82 +1,17 @@
 # { "Depends": "py-genlayer:test" }
 
-from genlayer import *
-
-
-@gl.contract
-class Registry:
-    # Declare persistent storage fields
-    contract_addresses: DynArray[str]
-
-    def __init__(self):
-        pass
-
-    @gl.public.write
-    def create_new_prediction_market(
-        self,
-        prediction_market_id: str,
-        title: str,
-        description: str,
-        potential_outcomes: list[str],
-        rules: list[str],
-        data_source_domains: list[str],
-        resolution_urls: list[str],
-        earliest_resolution_date: str,
-    ) -> None:
-        registered_contracts = len(self.contract_addresses)
-        contract_address = gl.deploy_contract(
-            code=contract_code_template.encode("utf-8"),
-            args=[
-                prediction_market_id,
-                title,
-                description,
-                potential_outcomes,
-                rules,
-                data_source_domains,
-                resolution_urls,
-                earliest_resolution_date,
-            ],
-            salt_nonce=registered_contracts + 1,
-        )
-        print("contract_address", contract_address)
-        print("contract_address type", type(contract_address))
-        self.contract_addresses.append(contract_address.as_hex)
-
-    @gl.public.write
-    def assistant_create_prediction_market(self) -> None:
-        self.create_new_prediction_market(
-            prediction_market_id="0",
-            title="Spain vs Italy Euro 2024 Football Match",
-            description="Prediction market for the outcome of the Spain vs Italy football match in Euro 2024.",
-            rules=[
-                "The match result will be determined based on the official score at the end of regular time and any extra time, excluding penalty shootouts.",
-                "The outcome will be verified using official sources such as UEFA's website or other reputable sports news outlets.",
-            ],
-            data_source_domains=[],
-            resolution_urls=[
-                "https://www.bbc.com/sport/football/scores-fixtures/2024-06-20"
-            ],
-            earliest_resolution_date="2024-06-21",
-            potential_outcomes=["Spain Wins", "Italy Wins", "Draw"],
-        )
-
-    @gl.public.view
-    def get_contract_addresses(self) -> list[str]:
-        return list(self.contract_addresses)
-
-
-contract_code_template = '''# { "Depends": "py-genlayer:test" }
-
 import json
 from enum import Enum
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from genlayer import *
 
+
 class Status(Enum):
     ACTIVE = "Active"
     RESOLVED = "Resolved"
     ERROR = "Error"
+
 
 @gl.contract
 class IntelligentOracle:
@@ -137,7 +72,7 @@ class IntelligentOracle:
             self.potential_outcomes.append(outcome.strip())
 
         for rule in rules:
-            self.rules.append(rule) 
+            self.rules.append(rule)
 
         for datasource in data_source_domains:
             self.data_source_domains.append(
@@ -153,7 +88,7 @@ class IntelligentOracle:
 
         self.earliest_resolution_date = earliest_resolution_date
         self.status = Status.ACTIVE.value
-        
+
         self.outcome = ""
         self.creator = gl.message.sender_account
 
@@ -161,7 +96,7 @@ class IntelligentOracle:
     def _check_evidence_domain(self, evidence: str) -> bool:
         try:
             parsed_url = urlparse(evidence)
-            evidence_domain = parsed_url.netloc.lower().replace('www.', '')
+            evidence_domain = parsed_url.netloc.lower().replace("www.", "")
             return evidence_domain in self.data_source_domains
         except Exception:
             return False
@@ -171,10 +106,8 @@ class IntelligentOracle:
         if self.status == Status.RESOLVED.value:
             raise ValueError("Cannot resolve an already resolved oracle.")
 
-        # TODO: Uncomment this when we have a way to get the current time
-        current_time = datetime.now().astimezone()
-        print("Current time:", current_time)
-        earliest_time = datetime.fromisoformat(self.earliest_resolution_date)
+        current_time = datetime.now().astimezone().date()
+        earliest_time = datetime.fromisoformat(self.earliest_resolution_date).date()
         if current_time < earliest_time:
             raise ValueError("Cannot resolve before the earliest resolution date.")
 
@@ -205,10 +138,11 @@ class IntelligentOracle:
         potential_outcomes = list(self.potential_outcomes)
         rules = list(self.rules)
         earliest_resolution_date = self.earliest_resolution_date
-                
+
         for resource_url in resources_to_check:
+
             def evaluate_single_source() -> str:
-                resource_web_data = gl.get_webpage(resource_url, mode="text") 
+                resource_web_data = gl.get_webpage(resource_url, mode="text")
                 print(resource_web_data)
 
                 task = f"""
@@ -295,14 +229,13 @@ Provide your response in **valid JSON** format with the following structure:
                 result = gl.exec_prompt(task)
                 print(result)
                 return result
-                
-            
+
             result = gl.eq_principle_prompt_comparative(
                 evaluate_single_source,
                 principle="`outcome` field must be exactly the same. All other fields must be similar",
             )
 
-            result_dict = _parse_json_dict(result)            
+            result_dict = _parse_json_dict(result)
             analyzed_outputs.append((resource_url, result_dict))
 
         def evaluate_all_sources() -> str:
@@ -375,7 +308,6 @@ Provide your response in **valid JSON** format with the following structure:
 
             """
 
-
             result = gl.exec_prompt(task)
             print(result)
             return result
@@ -390,8 +322,11 @@ Provide your response in **valid JSON** format with the following structure:
 
         if result_dict["outcome"] == "UNDETERMINED":
             return
-        
-        if result_dict["outcome"] == "ERROR" or result_dict["outcome"] not in self.potential_outcomes:
+
+        if (
+            result_dict["outcome"] == "ERROR"
+            or result_dict["outcome"] not in self.potential_outcomes
+        ):
             self.status = Status.ERROR.value
             return
 
@@ -431,8 +366,8 @@ def _parse_json_dict(json_str: str) -> dict:
 
     # Remove trailing commas before closing braces/brackets
     import re
-    json_str = re.sub(r',(?!\\s*?[\\{\\[\\"\\'\\w])', '', json_str)
+
+    json_str = re.sub(r",(?!\s*?[\{\[\"\'\w])", "", json_str)
     print(json_str)
 
     return json.loads(json_str)
-'''
