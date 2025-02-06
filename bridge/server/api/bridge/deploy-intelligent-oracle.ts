@@ -14,7 +14,7 @@ interface IntelligentOracleInput {
   earliestResolutionDate: string;
 }
 
-const { bridgePrivateKey, simulatorUrl, icRegistryAddress, ioContractPath } = useRuntimeConfig();
+const { bridgePrivateKey, simulatorUrl, icRegistryAddress } = useRuntimeConfig();
 
 function validateInput(input: IntelligentOracleInput): string | null {
   const requiredFields: (keyof IntelligentOracleInput)[] = [
@@ -91,10 +91,13 @@ export default defineEventHandler(async (event) => {
       args: deploymentArgs,
       value: BigInt(0),
     });
+    console.log("registerContractTransactionHash:", registerContractTransactionHash);
 
     const receipt = await client.waitForTransactionReceipt({
       hash: registerContractTransactionHash,
-      status: TransactionStatus.FINALIZED,
+      status: TransactionStatus.ACCEPTED,
+      retries: 30,
+      interval: 10_000,
     });
 
     return {

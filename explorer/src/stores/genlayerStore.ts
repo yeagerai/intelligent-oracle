@@ -18,7 +18,7 @@ export interface Oracle {
   valid_data_sources: string[];
   data_source_domains: string[];
   resolution_urls: string[];
-  analysis: string;
+  analysis: Record<string, any>;
 }
 
 // This store is for:
@@ -73,7 +73,6 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   }
 
   async function fetchOracle(address: Address): Promise<Oracle> {
-    console.log("fetchOracle", address);
     const oracle = await client.value
       .readContract({
         account: account.value,
@@ -86,14 +85,21 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
+    console.log("🚀 ~ fetchOracle ~ oracle.analysis:", oracle.analysis);
+    if (typeof oracle.analysis === "string" && !!oracle.analysis) {
+      oracle.analysis = JSON.parse(oracle.analysis);
+    }
+    console.log("🚀 ~ 2 fetchOracle ~ oracle:", address, oracle);
 
     // Update the oracle in the store if it exists
     const existingIndex = _oracles.value.findIndex((o) => o.address === address);
     if (existingIndex >= 0) {
-      _oracles.value[existingIndex] = oracle;
+      _oracles.value[existingIndex] = oracle as Oracle;
+    } else {
+      _oracles.value.push(oracle as Oracle);
     }
 
-    return oracle;
+    return oracle as Oracle;
   }
 
   async function resolveOracle(address: Address, evidence: string): Promise<Oracle> {

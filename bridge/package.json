@@ -12,7 +12,6 @@
     "@ai-sdk/openai": "latest",
     "@ai-sdk/vue": "latest",
     "ai": "latest",
-    "genlayer-js": "^0.3.2",
     "zod": "3.23.8"
   },
   "devDependencies": {
