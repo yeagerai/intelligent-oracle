@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRuntimeConfig } from "#app";
 import { useChat } from "@ai-sdk/vue";
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, nextTick, watch } from "vue";
 import confetti from "canvas-confetti";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
@@ -39,6 +39,16 @@ const deployedOracleAddress = ref("");
 const icDeploymentStatus = ref(DEPLOYMENT_STATUS.NONE);
 const inputRef = ref<HTMLInputElement | null>(null);
 
+// Add a ref for the messages container
+const messagesContainer = ref<HTMLDivElement | null>(null);
+
+// Add a function to scroll to bottom
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+};
+
 const { error, input, isLoading, messages, handleSubmit, reload, stop, append } = useChat({
   api: config.public.chatApiUrl as string,
   keepLastMessageOnError: true,
@@ -47,8 +57,16 @@ const { error, input, isLoading, messages, handleSubmit, reload, stop, append } 
     console.log("FinishReason", finishReason);
     setTimeout(() => {
       inputRef.value?.focus();
+      scrollToBottom();
     }, 0);
   },
+});
+
+// Add watch to handle scrolling when messages change
+watch(messages, () => {
+  nextTick(() => {
+    scrollToBottom();
+  });
 });
 
 const sendMessage = (e: Event) => {
@@ -191,105 +209,113 @@ const lastJsonMessageId = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background">
-    <div class="flex flex-col w-full max-w-3xl py-24 mx-auto stretch text-primary-text font-sans">
-      <div v-for="m in messages.slice(1)" :key="m.id" class="whitespace-pre-wrap mb-4">
-        <span class="font-bold" :class="{ 'text-highlight': m.role !== 'user' }">{{
-          m.role === "user" ? "You: " : "Intelligent Oracle Assistant: "
-        }}</span>
-        <span v-html="formatMessage(m.content).formattedContent.beforeJson"></span>
-        <div v-if="formatMessage(m.content).jsonContent" class="json-viewer-wrapper">
-          <pre><code class="language-json" v-html="formatMessage(m.content).highlightedJson"></code></pre>
-        </div>
-        <span v-html="formatMessage(m.content).formattedContent.afterJson"></span>
-        <div v-if="m.id === lastJsonMessageId" class="flex flex-col gap-2">
-          <div class="flex gap-2">
-            <button
-              @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
-              class="msg-btn copy-btn"
-            >
-              {{ configCopied ? "Copied!" : "Copy to Clipboard" }}
-            </button>
-            <button
-              @click="deployIntelligentContract(JSON.stringify(formatMessage(m.content).jsonContent))"
-              :disabled="
-                icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
-                icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
-              "
-              class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
-            >
-              {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
-            </button>
+    <div
+      ref="messagesContainer"
+      class="flex flex-col w-full max-w-3xl h-[calc(100vh-8rem)] mx-auto stretch text-primary-text font-sans overflow-y-auto px-4"
+    >
+      <div class="py-24">
+        <div v-for="m in messages.slice(1)" :key="m.id" class="whitespace-pre-wrap mb-4">
+          <span class="font-bold" :class="{ 'text-highlight': m.role !== 'user' }">{{
+            m.role === "user" ? "You: " : "Intelligent Oracle Assistant: "
+          }}</span>
+          <span v-html="formatMessage(m.content).formattedContent.beforeJson"></span>
+          <div v-if="formatMessage(m.content).jsonContent" class="json-viewer-wrapper">
+            <pre><code class="language-json" v-html="formatMessage(m.content).highlightedJson"></code></pre>
           </div>
-
-          <div v-if="deployedOracleAddress" class="mt-4 p-6 bg-green-100 rounded-lg border border-green-800">
-            <p class="text-green-800 text-lg mb-4">
-              Your Intelligent Oracle has been successfully deployed at:
-              <span class="font-mono font-medium block mt-2">{{ deployedOracleAddress }}</span>
-            </p>
-            <a
-              :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
-              target="_blank"
-              class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md transition-colors"
-            >
-              View in the explorer
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 ml-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <span v-html="formatMessage(m.content).formattedContent.afterJson"></span>
+          <div v-if="m.id === lastJsonMessageId" class="flex flex-col gap-2">
+            <div class="flex gap-2">
+              <button
+                @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
+                class="msg-btn copy-btn"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-            </a>
+                {{ configCopied ? "Copied!" : "Copy to Clipboard" }}
+              </button>
+              <button
+                @click="deployIntelligentContract(JSON.stringify(formatMessage(m.content).jsonContent))"
+                :disabled="
+                  icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
+                  icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
+                "
+                class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
+              >
+                {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
+              </button>
+            </div>
+
+            <div
+              v-if="deployedOracleAddress"
+              class="mt-4 p-6 bg-green-100 rounded-lg border border-green-800"
+            >
+              <p class="text-green-800 text-lg mb-4">
+                Your Intelligent Oracle has been successfully deployed at:
+                <span class="font-mono font-medium block mt-2">{{ deployedOracleAddress }}</span>
+              </p>
+              <a
+                :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
+                target="_blank"
+                class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md transition-colors"
+              >
+                View in the explorer
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 ml-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="isLoading" class="mt-4 text-secondary-text">
-        <div>Loading...</div>
-        <button
-          type="button"
-          class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
-          @click="stop"
-        >
-          Stop
-        </button>
-      </div>
-
-      <div v-if="error" class="mt-4">
-        <div class="text-accent">An error occurred.</div>
-        <button
-          type="button"
-          class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
-          @click="() => reload()"
-        >
-          Retry
-        </button>
-      </div>
-
-      <div class="mt-8">
-        <form @submit="sendMessage" class="fixed bottom-0 flex gap-2 w-full max-w-md mb-8">
-          <input
-            ref="inputRef"
-            class="flex-1 p-4 border border-highlight rounded-xl shadow-xl bg-background text-primary-text placeholder-secondary-text"
-            v-model="input"
-            placeholder="Say something..."
-            :disabled="disabled"
-          />
+        <div v-if="isLoading" class="mt-4 text-secondary-text">
+          <div>Loading...</div>
           <button
-            type="submit"
-            :disabled="disabled"
-            class="px-4 py-2 bg-highlight text-white rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
+            @click="stop"
           >
-            Send
+            Stop
           </button>
-        </form>
+        </div>
+
+        <div v-if="error" class="mt-4">
+          <div class="text-accent">An error occurred.</div>
+          <button
+            type="button"
+            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
+            @click="() => reload()"
+          >
+            Retry
+          </button>
+        </div>
+
+        <div class="mt-8">
+          <form @submit="sendMessage" class="fixed bottom-0 flex gap-2 w-full max-w-md mb-8">
+            <input
+              ref="inputRef"
+              class="flex-1 p-4 border border-highlight rounded-xl shadow-xl bg-background text-primary-text placeholder-secondary-text"
+              v-model="input"
+              placeholder="Say something..."
+              :disabled="disabled"
+            />
+            <button
+              type="submit"
+              :disabled="disabled"
+              class="px-4 py-2 bg-highlight text-white rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -398,5 +424,17 @@ code {
   .json-viewer-wrapper pre {
     background-color: #f5f5f5;
   }
+}
+
+/* Hide scrollbar but maintain scroll functionality */
+.overflow-y-auto {
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer/Edge */
+}
+
+/* WebKit browsers (Chrome, Safari) */
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
 }
 </style>
