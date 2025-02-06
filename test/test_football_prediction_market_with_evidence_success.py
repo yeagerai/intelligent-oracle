@@ -27,7 +27,7 @@ def test_football_prediction_market_with_evidence_success():
     assert has_success_status(result_schema)
 
     title = "Football Prediction Market"
-    description = "A market test"
+    description = "Predict the outcome of a football match"
     rules = ["The outcome is the result of the match"]
     data_source_domains = ["bbc.com"]
     resolution_urls = []

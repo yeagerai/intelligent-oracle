@@ -2,7 +2,6 @@ import { defineEventHandler, readBody } from "h3";
 import { createAccount, createClient } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { Address, TransactionStatus } from "genlayer-js/types";
-import { intelligentOracleCode } from "../../../contracts/intelligent-oracle";
 
 interface IntelligentOracleInput {
   predictionMarketId: string;
@@ -73,7 +72,7 @@ export default defineEventHandler(async (event) => {
       account: account, // Optional: Use this account for subsequent calls
       endpoint: simulatorUrl,
     });
-    console.log("🚀 ~ simulatorUrl:", simulatorUrl);
+    await client.initializeConsensusSmartContract();
 
     const deploymentArgs = [
       body.predictionMarketId || "0",
@@ -85,43 +84,20 @@ export default defineEventHandler(async (event) => {
       body.resolutionURLs || [],
       body.earliestResolutionDate,
     ];
-    console.log("🚀 ~ Deploy Intelligent Contract ~ deploymentArgs:", deploymentArgs);
-    const transactionHash = await client.deployContract({
-      code: intelligentOracleCode,
-      args: deploymentArgs,
-    });
-    console.log("🚀 ~ Deploy Intelligent Contract ~ transactionHash:", transactionHash);
-
-    const receipt = await client.waitForTransactionReceipt({
-      hash: transactionHash,
-      status: TransactionStatus.FINALIZED, // or 'ACCEPTED'
-    });
-    console.log("🚀 ~ Deploy Intelligent Contract ~ receipt:", receipt);
-
-    // @ts-ignore
-    if (
-      !receipt.consensus_data?.leader_receipt?.execution_result ||
-      receipt.consensus_data?.leader_receipt?.execution_result !== "SUCCESS"
-    ) {
-      return {
-        status: "error",
-        message: "Intelligent Oracle deployment failed",
-      };
-    }
-
-    const contractAddress = receipt.data?.contract_address as `0x${string}`;
-    console.log("🚀 ~ Deploy Intelligent Contract ~ registering contract: ", contractAddress);
 
     const registerContractTransactionHash = await client.writeContract({
       address: icRegistryAddress as Address,
-      functionName: "register_contract",
-      args: [contractAddress],
+      functionName: "create_new_prediction_market",
+      args: deploymentArgs,
       value: BigInt(0),
     });
+    console.log("registerContractTransactionHash:", registerContractTransactionHash);
 
-    await client.waitForTransactionReceipt({
+    const receipt = await client.waitForTransactionReceipt({
       hash: registerContractTransactionHash,
-      status: TransactionStatus.FINALIZED,
+      status: TransactionStatus.ACCEPTED,
+      retries: 30,
+      interval: 10_000,
     });
 
     return {

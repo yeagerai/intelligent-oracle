@@ -180,7 +180,7 @@
       </div>
     </div>
     <!-- Resolution Modal -->
-    <div v-if="showResolutionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeModal">
+    <div v-if="showResolutionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" @click="closeResolutionModal">
       <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white" @click.stop>
         <div class="mt-3 text-center">
           <h3 class="text-lg leading-6 font-medium text-primary-text">Provide a URL for resolution</h3>
@@ -300,7 +300,7 @@ onUnmounted(() => {
   }
 });
 
-async function loadOracle() {
+async function  loadOracle() {
   oracle.value = (await genlayerStore.oracles).find(oracle => oracle.address === route.params.address);
   transactions.value = await genlayerStore.client.request( // TODO: fix typing and explore alternatives to sim_getTransactionsForAddress, since it's not a GenLayer method (could be problematic when going to mainnet)
     {
@@ -325,7 +325,11 @@ async function resolveOracle() {
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Not specified';
   const date = new Date(dateString);
-  return date.toLocaleString();
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
 function openTransactionModal(tx: Transaction) {
@@ -361,12 +365,11 @@ const prettyJson = computed(() => {
       ...selectedTransaction.value.consensus_data,
       leader_receipt: selectedTransaction.value.consensus_data?.leader_receipt ? {
         ...selectedTransaction.value.consensus_data.leader_receipt,
-        contract_state: `${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(0,10)}...${selectedTransaction.value.consensus_data.leader_receipt.contract_state.slice(-10)}`,
       } : undefined,
       validators: selectedTransaction.value.consensus_data?.validators.map((validator: any) => ({
         ...validator,
         eq_outputs: undefined,
-        contract_state: `${validator.contract_state.slice(0,10)}...${validator.contract_state.slice(-10)}`,
+        // contract_state: `${validator.contract_state.slice(0,10)}...${validator.contract_state.slice(-10)}`,
       })),
     },
   }, null, 2);

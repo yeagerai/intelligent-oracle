@@ -30,7 +30,7 @@ def test_football_prediction_market_predefined_source_fail_bad_source():
     data_source = "https://www.bbc.com/sport/football/scores-fixtures/2024-10-10"
 
     title = "Football Prediction Market"
-    description = "A market test"
+    description = "Predict the outcome of a football match"
     rules = ["The outcome is the result of the match"]
     data_source_domains = []
     resolution_urls = [data_source]

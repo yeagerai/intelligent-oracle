@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { createClient, createAccount as createGenLayerAccount, generatePrivateKey } from "genlayer-js";
+import { createClient, createAccount as createGenLayerAccount, generatePrivateKey, abi } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
 import { ref, computed } from "vue";
 import { Address } from "genlayer-js/types";
@@ -18,7 +18,7 @@ export interface Oracle {
   valid_data_sources: string[];
   data_source_domains: string[];
   resolution_urls: string[];
-  analysis: string;
+  analysis: Record<string, any>;
 }
 
 // This store is for:
@@ -63,19 +63,16 @@ export const useGenlayerStore = defineStore("genlayer", () => {
 
   async function refreshOracles() {
     const registryContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as Address;
-    console.log("registryContractAddress", registryContractAddress);
     const contract_addresses: Address[] = await client.value.readContract({
       account: account.value,
       address: registryContractAddress,
-      functionName: "get_contract_addresses", 
+      functionName: "get_contract_addresses",
       args: [],
     });
-
     _oracles.value = await Promise.all(contract_addresses.map((address) => fetchOracle(address)));
   }
 
   async function fetchOracle(address: Address): Promise<Oracle> {
-    console.log("fetchOracle", address);
     const oracle = await client.value
       .readContract({
         account: account.value,
@@ -83,19 +80,26 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         functionName: "get_dict",
         args: [],
       })
-      .then((result) => ({ ...result, address }))
+      .then((result) => ({ ...Object.fromEntries(result), address }))
       .catch((error) => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
+    console.log("🚀 ~ fetchOracle ~ oracle.analysis:", oracle.analysis);
+    if (typeof oracle.analysis === "string" && !!oracle.analysis) {
+      oracle.analysis = JSON.parse(oracle.analysis);
+    }
+    console.log("🚀 ~ 2 fetchOracle ~ oracle:", address, oracle);
 
     // Update the oracle in the store if it exists
-    const existingIndex = _oracles.value.findIndex(o => o.address === address);
+    const existingIndex = _oracles.value.findIndex((o) => o.address === address);
     if (existingIndex >= 0) {
-      _oracles.value[existingIndex] = oracle;
+      _oracles.value[existingIndex] = oracle as Oracle;
+    } else {
+      _oracles.value.push(oracle as Oracle);
     }
 
-    return oracle;
+    return oracle as Oracle;
   }
 
   async function resolveOracle(address: Address, evidence: string): Promise<Oracle> {
