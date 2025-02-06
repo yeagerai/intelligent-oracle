@@ -99,14 +99,14 @@ export default defineEventHandler(async (event) => {
     });
 
     if (methodCallReceipt.triggered_transactions.length > 0) {
-      const predictionMarketDeployTransactionHash = methodCallReceipt.triggered_transactions[0];
-      const predictionMarketDeployReceipt = await client.waitForTransactionReceipt({
-        hash: predictionMarketDeployTransactionHash,
+      const intelligentOracleDeployTxHash = methodCallReceipt.triggered_transactions[0];
+      const intelligentOracleDeployReceipt = await client.waitForTransactionReceipt({
+        hash: intelligentOracleDeployTxHash,
       });
       return {
         status: "success",
         message: "Intelligent Oracle deployed successfully",
-        receipt: predictionMarketDeployReceipt,
+        receipt: intelligentOracleDeployReceipt,
       };
     }
   } catch (error) {

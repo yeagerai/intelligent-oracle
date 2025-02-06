@@ -161,30 +161,53 @@ const formatMessage = (content: string) => {
           m.role === "user" ? "You: " : "Intelligent Oracle Assistant: "
         }}</span>
         <span v-html="formatMessage(m.content).formattedContent"> </span>
-        <div v-if="formatMessage(m.content).jsonContent" class="flex gap-2">
-          <button
-            @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
-            class="msg-btn copy-btn"
-          >
-            {{ configCopied ? "Copied!" : "Copy to Clipboard" }}
-          </button>
-          <button
-            @click="deployIntelligentContract(JSON.stringify(formatMessage(m.content).jsonContent))"
-            :disabled="
-              icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
-              icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
-            "
-            class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
-          >
-            {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
-          </button>
-          <a
-            v-if="deployedOracleAddress"
-            :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
-            target="_blank"
-            class="msg-btn px-4 py-1"
-            >View in the explorer: {{ deployedOracleAddress }}</a
-          >
+        <div v-if="formatMessage(m.content).jsonContent" class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <button
+              @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
+              class="msg-btn copy-btn"
+            >
+              {{ configCopied ? "Copied!" : "Copy to Clipboard" }}
+            </button>
+            <button
+              @click="deployIntelligentContract(JSON.stringify(formatMessage(m.content).jsonContent))"
+              :disabled="
+                icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
+                icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
+              "
+              class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
+            >
+              {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
+            </button>
+          </div>
+
+          <div v-if="deployedOracleAddress" class="mt-4 p-6 bg-green-100 rounded-lg border border-green-800">
+            <p class="text-green-800 text-lg mb-4">
+              Your Intelligent Oracle has been successfully deployed at:
+              <span class="font-mono font-medium block mt-2">{{ deployedOracleAddress }}</span>
+            </p>
+            <a
+              :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
+              target="_blank"
+              class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md transition-colors"
+            >
+              View in the explorer
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 ml-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -300,6 +323,16 @@ code {
     background-color: #d0d0d0;
     border-color: #d0d0d0;
     color: #666;
+  }
+}
+
+.dark .bg-green-100 {
+  background-color: rgba(6, 78, 59, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bg-green-100 {
+    background-color: rgba(6, 78, 59, 0.2);
   }
 }
 </style>
