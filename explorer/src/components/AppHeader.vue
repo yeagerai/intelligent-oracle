@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { RouterLink } from "vue-router";
+
 interface HeaderLink {
   label: string;
   href?: string;
@@ -15,11 +18,11 @@ const props = defineProps<Props>();
 const links = computed<HeaderLink[]>(() => [
   {
     label: "Assistant",
-    isActive: true,
     href: props.chatUrl,
   },
   {
     label: "Explorer",
+    isActive: true,
     href: props.explorerUrl,
   },
 ]);
@@ -29,7 +32,9 @@ const links = computed<HeaderLink[]>(() => [
   <header class="fixed top-0 left-0 right-0 bg-background z-50 border-b border-highlight/20">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center">
-        <img src="/intelligent-oracle-logo.svg" alt="Intelligent Oracle" class="h-8" />
+        <router-link to="/">
+          <img src="/intelligent-oracle-logo.svg" alt="Intelligent Oracle" class="h-8" />
+        </router-link>
       </div>
       <nav class="flex items-center gap-8">
         <template v-for="link in links" :key="link.label">

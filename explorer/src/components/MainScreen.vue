@@ -1,14 +1,16 @@
 <template>
-  <div class="min-h-screen bg-background text-primary-text">
-    <header class="bg-white shadow flex justify-between items-center">
-      <div class="max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-primary-text">Intelligent Oracle Explorer</h1>
+  <div class="min-h-screen text-primary-text">
+    <header class="bg-white shadow flex justify-between items-center pt-16">
+      <div class="max-w-7xl mx-auto flex justify-between items-center w-full">
+        <div class="py-6 sm:px-4">
+          <h1 class="text-3xl font-bold text-primary-text">Intelligent Oracle Explorer</h1>
+        </div>
+        <button @click="refreshOracles" class="mr-4 px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
+          Refresh
+        </button>
       </div>
-      <button @click="refreshOracles" class="mr-4 px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
-        Refresh
-      </button>
     </header>
-    <main class="mx-auto py-6 sm:px-6 lg:px-8">
+    <main class="mx-auto py-6 sm:px-6 lg:px-8 max-w-7xl px-4">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Oracle Cards -->
         <router-link
