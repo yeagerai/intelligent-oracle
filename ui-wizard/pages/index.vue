@@ -52,9 +52,7 @@ const scrollToBottom = () => {
 const { error, input, isLoading, messages, handleSubmit, reload, stop, append } = useChat({
   api: config.public.chatApiUrl as string,
   keepLastMessageOnError: true,
-  onFinish(message, { usage, finishReason }) {
-    console.log("Usage", usage);
-    console.log("FinishReason", finishReason);
+  onFinish() {
     setTimeout(() => {
       inputRef.value?.focus();
       scrollToBottom();
@@ -69,10 +67,30 @@ watch(messages, () => {
   });
 });
 
+// Add function to handle textarea auto-resize
+const autoResize = (e: Event) => {
+  const textarea = e.target as HTMLTextAreaElement;
+  textarea.style.height = "auto";
+  textarea.style.height = textarea.scrollHeight + "px";
+};
+
+// Add new handler for keydown
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage(e);
+  }
+};
+
+// Modify sendMessage to remove the Enter key check since it's handled in handleKeyDown
 const sendMessage = (e: Event) => {
   e.preventDefault();
   icDeploymentStatus.value = DEPLOYMENT_STATUS.NONE;
   handleSubmit();
+  // Reset textarea height after sending
+  if (inputRef.value) {
+    inputRef.value.style.height = "auto";
+  }
 };
 
 const disabled = computed(() => isLoading.value || error.value != null);
@@ -164,9 +182,7 @@ const formatMessage = (content: string) => {
   try {
     // Split content into parts before and after the JSON block
     const [beforeJson, ...afterJsonParts] = content.split(jsonRegex);
-    console.log("🚀 ~ formatMessage ~ beforeJson:", beforeJson);
     const afterJson = afterJsonParts.slice(1).join("").trim();
-    console.log("🚀 ~ formatMessage ~ afterJson:", afterJson);
 
     // Format the content with the JSON removed
     const formattedContent = {
@@ -223,11 +239,11 @@ const lastJsonMessageId = computed(() => {
             <pre><code class="language-json" v-html="formatMessage(m.content).highlightedJson"></code></pre>
           </div>
           <span v-html="formatMessage(m.content).formattedContent.afterJson"></span>
-          <div v-if="m.id === lastJsonMessageId" class="flex flex-col gap-2">
+          <div v-if="m.id === lastJsonMessageId" class="flex flex-col gap-2 mt-4">
             <div class="flex gap-2">
               <button
                 @click="copyToClipboard(JSON.stringify(formatMessage(m.content).jsonContent, null, 2))"
-                class="msg-btn copy-btn"
+                class="px-4 py-2 border border-highlight rounded hover:bg-highlight hover:text-white transition-colors text-highlight"
               >
                 {{ configCopied ? "Copied!" : "Copy to Clipboard" }}
               </button>
@@ -237,16 +253,13 @@ const lastJsonMessageId = computed(() => {
                   icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYING ||
                   icDeploymentStatus === DEPLOYMENT_STATUS.DEPLOYED
                 "
-                class="msg-btn deploy-btn bg-highlight text-white border border-highlight"
+                class="px-4 py-2 bg-highlight text-white rounded hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ getDeployButtonTextFromStatus(icDeploymentStatus) }}
               </button>
             </div>
 
-            <div
-              v-if="deployedOracleAddress"
-              class="mt-4 p-6 bg-green-100 rounded-lg border border-green-800"
-            >
+            <div v-if="deployedOracleAddress" class="mt-4 p-6 bg-green-100 rounded border border-green-800">
               <p class="text-green-800 text-lg mb-4">
                 Your Intelligent Oracle has been successfully deployed at:
                 <span class="font-mono font-medium block mt-2">{{ deployedOracleAddress }}</span>
@@ -254,7 +267,7 @@ const lastJsonMessageId = computed(() => {
               <a
                 :href="`${config.public.explorerUrl}/oracle/${deployedOracleAddress}`"
                 target="_blank"
-                class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md transition-colors"
+                class="inline-flex items-center px-4 py-2 bg-highlight text-white rounded hover:bg-opacity-90 transition-colors"
               >
                 View in the explorer
                 <svg
@@ -280,7 +293,7 @@ const lastJsonMessageId = computed(() => {
           <div>Loading...</div>
           <button
             type="button"
-            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
+            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded hover:bg-highlight hover:text-white transition-colors"
             @click="stop"
           >
             Stop
@@ -291,7 +304,7 @@ const lastJsonMessageId = computed(() => {
           <div class="text-accent">An error occurred.</div>
           <button
             type="button"
-            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded-xl hover:bg-highlight hover:text-primary-text transition-colors"
+            class="px-4 py-2 mt-4 text-highlight border border-highlight rounded hover:bg-highlight hover:text-white transition-colors"
             @click="() => reload()"
           >
             Retry
@@ -299,18 +312,23 @@ const lastJsonMessageId = computed(() => {
         </div>
 
         <div class="mt-8">
-          <form @submit="sendMessage" class="fixed bottom-0 flex gap-2 w-full max-w-md mb-8">
-            <input
+          <form
+            @submit="sendMessage"
+            class="fixed bottom-0 left-1/2 -translate-x-1/2 flex gap-2 w-full max-w-3xl px-4 mb-8"
+          >
+            <textarea
               ref="inputRef"
-              class="flex-1 p-4 border border-highlight rounded-xl shadow-xl bg-background text-primary-text placeholder-secondary-text"
+              class="flex-1 p-4 border border-highlight rounded shadow-xl bg-background text-primary-text placeholder-secondary-text resize-none overflow-hidden"
               v-model="input"
               placeholder="Say something..."
               :disabled="disabled"
-            />
+              @keydown.enter="handleKeyDown"
+              @input="autoResize"
+            ></textarea>
             <button
               type="submit"
               :disabled="disabled"
-              class="px-4 py-2 bg-highlight text-white rounded-xl hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-highlight text-white rounded hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-fit"
             >
               Send
             </button>
@@ -348,68 +366,16 @@ code {
   }
 }
 
-.msg-btn {
-  display: block;
-  margin-top: 10px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.copy-btn {
-  background-color: #4a4a4a;
-  color: #fff;
-}
-.copy-btn:hover {
-  background-color: #5a5a5a;
-}
-
-@media (prefers-color-scheme: light) {
-  .copy-btn {
-    background-color: #e0e0e0;
-    color: #333;
-  }
-
-  .copy-btn:hover {
-    background-color: #d0d0d0;
-  }
-}
-
-.deploy-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #808080;
-  border-color: #808080;
-}
-
-@media (prefers-color-scheme: light) {
-  .deploy-btn:disabled {
-    background-color: #d0d0d0;
-    border-color: #d0d0d0;
-    color: #666;
-  }
-}
-
-.dark .bg-green-100 {
-  background-color: rgba(6, 78, 59, 0.2);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bg-green-100 {
-    background-color: rgba(6, 78, 59, 0.2);
-  }
-}
-
-.json-viewer-wrapper {
-  margin: 1em 0;
+.msg-btn,
+.copy-btn,
+.deploy-btn {
+  all: unset;
 }
 
 .json-viewer-wrapper pre {
   margin: 0;
   background-color: #1e1e1e;
-  border-radius: 6px;
+  border-radius: 0.25rem;
   padding: 1rem;
   overflow-x: auto;
 }
@@ -417,6 +383,11 @@ code {
 .json-viewer-wrapper code {
   font-family: "Fira Code", monospace;
   font-size: 0.9em;
+  max-width: 100%;
+  display: inline-block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
 }
 
 /* Light mode overrides */
@@ -436,5 +407,12 @@ code {
 /* WebKit browsers (Chrome, Safari) */
 .overflow-y-auto::-webkit-scrollbar {
   display: none;
+}
+
+/* Add styles for textarea auto-resize */
+textarea {
+  min-height: 44px;
+  max-height: 200px;
+  line-height: 1.5;
 }
 </style>
