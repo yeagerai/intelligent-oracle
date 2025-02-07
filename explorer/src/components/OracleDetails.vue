@@ -1,151 +1,142 @@
 <template>
-  <div class="min-h-screen bg-background text-primary-text">
-    <header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-          <router-link 
-            to="/" 
-            class="text-4xl font-medium py-2 cursor-pointer"
-          >
-          &#9204;
-          </router-link>
-          <h1 class="text-3xl font-bold text-primary-text">Oracle Details</h1>
-        </div>
-        <div class="flex space-x-4">
-          <button @click="refreshOracle" class="px-4 py-2 border border-highlight text-highlight bg-white rounded hover:bg-highlight/10 transition-colors">
-            Refresh Data
-          </button>
-          <button @click="openResolutionModal" class="px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
+  <div class="min-h-screen bg-background text-primary-text pt-16">
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div v-if="oracle" class="flex flex-col space-y-6">
+        <div class="flex space-x-6">
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+              <div class="flex flex-col">
+                <h3 class="text-lg leading-6 font-medium text-primary-text">{{ oracle.title }}</h3>
+                <p class="mt-1 max-w-2xl text-sm text-secondary-text">
+                  <Address :address="oracle.address" :showFull="true" />
+                </p>
+              </div>
+              <button @click="openResolutionModal" class="px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
             Initiate Resolution
           </button>
-        </div>
-      </div>
-    </header>
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div v-if="oracle" class="flex space-x-6">
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
-          <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-primary-text">{{ oracle.title }}</h3>
-            <p class="mt-1 max-w-2xl text-sm text-secondary-text">
-              <Address :address="oracle.address" :showFull="true" />
-            </p>
-          </div>
-          <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-gray-200">
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Status</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <span :class="{
-                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium': true,
-                    'bg-highlight/20 text-highlight': oracle.status === 'Active',
-                    'bg-green-100 text-green-800': oracle.status === 'Resolved',
-                    'bg-red-100 text-red-800': oracle.status === 'Error'
-                  }">
-                    {{ oracle.status }}
-                  </span>
-                </dd>
-              </div>
-              <div v-if="oracle.outcome" class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Outcome</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.outcome || 'Not yet determined' }}</dd>
-              </div>
-              
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Description</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.description }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Potential Outcomes</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <ul class="list-disc pl-5">
-                    <li v-for="outcome in oracle.potential_outcomes" :key="outcome">{{ outcome }}</li>
-                  </ul>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Rules</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <ul class="list-disc pl-5">
-                    <li v-for="rule in oracle.rules" :key="rule">{{ rule }}</li>
-                  </ul>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Data Source Domains:</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <ul v-if="oracle.data_source_domains.length > 0" class="list-disc pl-5">
-                    <li v-for="domain in oracle.data_source_domains" :key="domain">{{ domain }}</li>
-                  </ul>
-                  <div v-else>This oracle uses fixed resolution URLs</div>
-                </dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Resolution URLs:</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <ul v-if="oracle.resolution_urls && oracle.resolution_urls.length > 0" class="list-disc pl-5">
-                    <li v-for="url in oracle.resolution_urls" :key="url">{{ url }}</li>
-                  </ul>
-                  <div v-else>This oracle uses dynamic evidence URLs</div>
-                </dd>
-              </div>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+              <dl class="sm:divide-y sm:divide-gray-200">
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Status</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <span :class="{
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium': true,
+                      'bg-highlight/20 text-highlight': oracle.status === 'Active',
+                      'bg-green-100 text-green-800': oracle.status === 'Resolved',
+                      'bg-red-100 text-red-800': oracle.status === 'Error'
+                    }">
+                      {{ oracle.status }}
+                    </span>
+                  </dd>
+                </div>
+                <div v-if="oracle.outcome" class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Outcome</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.outcome || 'Not yet determined' }}</dd>
+                </div>
+                
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Description</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.description }}</dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Potential Outcomes</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <ul class="list-disc pl-5">
+                      <li v-for="outcome in oracle.potential_outcomes" :key="outcome">{{ outcome }}</li>
+                    </ul>
+                  </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Rules</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <ul class="list-disc pl-5">
+                      <li v-for="rule in oracle.rules" :key="rule">{{ rule }}</li>
+                    </ul>
+                  </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Data Source Domains:</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <ul v-if="oracle.data_source_domains.length > 0" class="list-disc pl-5">
+                      <li v-for="domain in oracle.data_source_domains" :key="domain">{{ domain }}</li>
+                    </ul>
+                    <div v-else>This oracle uses fixed resolution URLs</div>
+                  </dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Resolution URLs:</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <ul v-if="oracle.resolution_urls && oracle.resolution_urls.length > 0" class="list-disc pl-5">
+                      <li v-for="url in oracle.resolution_urls" :key="url">{{ url }}</li>
+                    </ul>
+                    <div v-else>This oracle uses dynamic evidence URLs</div>
+                  </dd>
+                </div>
 
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Earliest Resolution Date</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ formatDate(oracle.earliest_resolution_date) }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Prediction Market ID</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.prediction_market_id }}</dd>
-              </div>
-              <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt class="text-sm font-medium text-secondary-text">Analysis</dt>
-                <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
-                  <div v-if="oracle.analysis" class="whitespace-pre-wrap break-words">
-                    <div v-if="oracle.analysis.justification || oracle.analysis.reasoning">{{ oracle.analysis.justification || oracle.analysis.reasoning }}</div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Earliest Resolution Date</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ formatDate(oracle.earliest_resolution_date) }}</dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Prediction Market ID</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">{{ oracle.prediction_market_id }}</dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt class="text-sm font-medium text-secondary-text">Analysis</dt>
+                  <dd class="mt-1 text-sm text-primary-text sm:mt-0 sm:col-span-2">
+                    <div v-if="oracle.analysis" class="whitespace-pre-wrap break-words">
+                      <div v-if="oracle.analysis.justification || oracle.analysis.reasoning">{{ oracle.analysis.justification || oracle.analysis.reasoning }}</div>
+                      <div v-else>No analysis available</div>
+                    </div>
                     <div v-else>No analysis available</div>
-                  </div>
-                  <div v-else>No analysis available</div>
-                </dd>
-              </div>
-            </dl>
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
-        </div>
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
-          <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-primary-text">Transactions</h3>
-          </div>
-          <div class="border-t border-gray-200">
-            <ul class="divide-y divide-gray-200">
-              <li v-for="tx in transactions" :key="tx.hash" class="px-4 py-4 cursor-pointer hover:bg-gray-50" @click="openTransactionModal(tx)">
-                <div class="flex items-center justify-between">
-                  <p class="text-sm font-medium text-highlight truncate">
+          <div class="bg-white shadow overflow-hidden sm:rounded-lg flex-1">
+            <div class="px-4 py-5 sm:px-6">
+              <h3 class="text-lg leading-6 font-medium text-primary-text">Transactions</h3>
+            </div>
+            <div class="p-4 space-y-4">
+              <div v-for="tx in transactions" 
+                   :key="tx.hash" 
+                   class="bg-gray-100 shadow rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" 
+                   @click="openTransactionModal(tx)"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-sm font-medium text-highlight truncate max-w-[70%]">
                     {{ tx.hash }}
                   </p>
-                  <div class="ml-2 flex-shrink-0 flex">
-                    <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'">
-                      {{ tx.status }}
-                    </p>
-                  </div>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                        :class="tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'"
+                  >
+                    {{ tx.status }}
+                  </span>
                 </div>
-                <div class="mt-2">
+                <div class="space-y-2">
                   <p class="text-sm text-secondary-text">Created at: {{ formatDate(tx.created_at) }}</p>
-                  <p class="text-sm text-secondary-text">Nonce: {{ tx.nonce }}</p>
-                  <div v-if="tx.status !== 'PENDING'">
-                    <h4 class="text-sm font-medium text-primary-text mt-2">Validators and Votes:</h4>
+                  <p class="text-sm text-secondary-text">Type: {{ tx.data.contract_address ? "Deploy" : "Resolution" }}</p>
+                  <div v-if="tx.status !== 'PENDING'" class="pt-2">
+                    <h4 class="text-sm font-medium text-primary-text mb-1">Validators and Votes:</h4>
                     <template v-if="tx.consensus_data && Object.entries(tx.consensus_data.votes).length > 0">
-                      <ul class="mt-1 space-y-1">
-                        <li v-for="validator in Object.entries(tx.consensus_data.votes)" :key="validator[0]" class="text-sm text-secondary-text">
+                      <ul class="space-y-1">
+                        <li v-for="validator in Object.entries(tx.consensus_data.votes)" 
+                            :key="validator[0]" 
+                            class="text-sm text-secondary-text"
+                        >
                           {{ validator[0] }}: {{ tx.consensus_data.votes[validator[0]] || 'No vote' }}
                         </li>
                       </ul>
                     </template>
                     <template v-else>
-                      <p class="mt-1 text-sm text-secondary-text">Leader only execution</p>
+                      <p class="text-sm text-secondary-text">Leader only execution</p>
                     </template>
                   </div>
                 </div>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
