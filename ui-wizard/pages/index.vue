@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-json";
+import AppHeader from "~/components/AppHeader.vue";
 
 // Function to highlight JSON
 const highlightJson = (code: string) => {
@@ -225,9 +226,11 @@ const lastJsonMessageId = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background">
+    <AppHeader :explorer-url="config.public.explorerUrl" :oracle-address="deployedOracleAddress" />
+
     <div
       ref="messagesContainer"
-      class="flex flex-col w-full max-w-3xl h-[calc(100vh-8rem)] mx-auto stretch text-primary-text font-sans overflow-y-auto px-4"
+      class="flex flex-col w-full max-w-3xl h-[calc(100vh-8rem)] mx-auto stretch text-primary-text font-sans overflow-y-auto px-4 pt-16"
     >
       <div class="py-24">
         <div v-for="m in messages.slice(1)" :key="m.id" class="whitespace-pre-wrap mb-4">
