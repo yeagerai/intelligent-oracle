@@ -103,11 +103,9 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
-    console.log("🚀 ~ fetchOracle ~ oracle.analysis:", oracle.analysis);
     if (typeof oracle.analysis === "string" && !!oracle.analysis) {
       oracle.analysis = JSON.parse(oracle.analysis);
     }
-    console.log("🚀 ~ 2 fetchOracle ~ oracle:", address, oracle);
 
     // Update the oracle in the store if it exists
     const existingIndex = _oracles.value.findIndex((o) => o.address === address);
