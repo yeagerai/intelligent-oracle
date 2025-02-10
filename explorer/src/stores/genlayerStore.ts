@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { createClient, createAccount as createGenLayerAccount, generatePrivateKey, abi } from "genlayer-js";
 import { simulator } from "genlayer-js/chains";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Address } from "genlayer-js/types";
 
 export interface Oracle {
@@ -52,8 +52,17 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   }
 
   // Oracles
+  const loading = ref(false);
+  const _oracles = ref<Oracle[]>(JSON.parse(localStorage.getItem("io-explorer.oracles") || "[]"));
 
-  const _oracles = ref<Oracle[]>([]);
+  watch(
+    _oracles,
+    (newOracles) => {
+      localStorage.setItem("io-explorer.oracles", JSON.stringify(newOracles));
+    },
+    { deep: true }
+  );
+
   const oracles = computed(async () => {
     if (_oracles.value.length === 0) {
       await refreshOracles();
@@ -62,14 +71,23 @@ export const useGenlayerStore = defineStore("genlayer", () => {
   });
 
   async function refreshOracles() {
-    const registryContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as Address;
-    const contract_addresses: Address[] = await client.value.readContract({
-      account: account.value,
-      address: registryContractAddress,
-      functionName: "get_contract_addresses",
-      args: [],
-    });
-    _oracles.value = await Promise.all(contract_addresses.map((address) => fetchOracle(address)));
+    if (loading.value) return; // Prevent multiple simultaneous refreshes
+
+    loading.value = true;
+    try {
+      const registryContractAddress = import.meta.env.VITE_CONTRACT_ADDRESS as Address;
+      const contract_addresses: Address[] = await client.value.readContract({
+        account: account.value,
+        address: registryContractAddress,
+        functionName: "get_contract_addresses",
+        args: [],
+      });
+      _oracles.value = await Promise.all(contract_addresses.map((address) => fetchOracle(address)));
+    } catch (error) {
+      console.error("Error refreshing oracles:", error);
+    } finally {
+      loading.value = false;
+    }
   }
 
   async function fetchOracle(address: Address): Promise<Oracle> {
@@ -85,11 +103,9 @@ export const useGenlayerStore = defineStore("genlayer", () => {
         console.error("Error fetching oracle:", error);
         return { address, error: "Error fetching oracle" };
       });
-    console.log("🚀 ~ fetchOracle ~ oracle.analysis:", oracle.analysis);
     if (typeof oracle.analysis === "string" && !!oracle.analysis) {
       oracle.analysis = JSON.parse(oracle.analysis);
     }
-    console.log("🚀 ~ 2 fetchOracle ~ oracle:", address, oracle);
 
     // Update the oracle in the store if it exists
     const existingIndex = _oracles.value.findIndex((o) => o.address === address);
@@ -123,5 +139,6 @@ export const useGenlayerStore = defineStore("genlayer", () => {
     refreshOracles,
     fetchOracle,
     resolveOracle,
+    loading,
   };
 });

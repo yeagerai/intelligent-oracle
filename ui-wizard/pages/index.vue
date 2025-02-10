@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRuntimeConfig } from "#app";
 import { useChat } from "@ai-sdk/vue";
+import { generateId } from "ai";
 import { computed, ref, onMounted, nextTick, watch } from "vue";
 import confetti from "canvas-confetti";
 import Prism from "prismjs";
@@ -50,14 +51,42 @@ const scrollToBottom = () => {
   }
 };
 
+const chatId = ref<string>("");
+
+// Add this helper function at the top level
+const getStoredMessages = () => {
+  if (typeof window !== "undefined") {
+    const savedMessages = localStorage.getItem("io-wizard.conversation");
+    return savedMessages ? JSON.parse(savedMessages) : [];
+  }
+  return [];
+};
+
+const getStoredChatId = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("io-wizard.chatId");
+  }
+  return null;
+};
+
+const saveToStorage = (messages: any, chatId: string) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("io-wizard.conversation", JSON.stringify(messages));
+    localStorage.setItem("io-wizard.chatId", chatId);
+  }
+};
+
 const { error, input, isLoading, messages, handleSubmit, reload, stop, append } = useChat({
+  id: chatId.value,
   api: config.public.chatApiUrl as string,
   keepLastMessageOnError: true,
+  initialMessages: getStoredMessages(),
   onFinish() {
     setTimeout(() => {
       inputRef.value?.focus();
       scrollToBottom();
     }, 0);
+    saveToStorage(messages.value, chatId.value);
   },
 });
 
@@ -100,17 +129,26 @@ const startChat = () => {
   append({
     role: "user",
     content: "__start__",
+    id: chatId.value,
   });
-  chatInitiated.value = true;
-  setTimeout(() => {
-    inputRef.value?.focus();
-  }, 0);
 };
 
 onMounted(() => {
+  // Load or generate chat ID
+  const savedChatId = getStoredChatId();
+  chatId.value = savedChatId || generateId();
+
+  // Only start a new chat if there are no existing messages
+  if (!messages.value.length) {
+    setTimeout(() => {
+      startChat();
+    }, 1000);
+  }
+  chatInitiated.value = true;
   setTimeout(() => {
-    startChat();
-  }, 1000);
+    inputRef.value?.focus();
+    scrollToBottom();
+  }, 0);
 });
 
 const copyToClipboard = (text: string) => {
@@ -222,17 +260,51 @@ const lastJsonMessageId = computed(() => {
   }
   return null;
 });
+
+// Add this new function with the other functions
+const resetConversation = () => {
+  // Clear localStorage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("io-wizard.conversation");
+    localStorage.removeItem("io-wizard.chatId");
+  }
+
+  // Reset all relevant state
+  messages.value = [];
+  chatId.value = generateId();
+  deployedOracleAddress.value = "";
+  icDeploymentStatus.value = DEPLOYMENT_STATUS.NONE;
+
+  // Start new chat
+  startChat();
+};
 </script>
 
 <template>
   <div class="min-h-screen bg-background">
     <AppHeader :explorer-url="config.public.explorerUrl" :oracle-address="deployedOracleAddress" />
 
+    <div class="max-w-3xl mx-auto px-4 pt-24 flex justify-end">
+      <button
+        @click="resetConversation"
+        class="px-4 py-2 bg-highlight text-white rounded hover:bg-opacity-90 transition-colors flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path
+            fill-rule="evenodd"
+            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        Create New Oracle
+      </button>
+    </div>
+
     <div
       ref="messagesContainer"
-      class="flex flex-col w-full max-w-3xl h-[calc(100vh-8rem)] mx-auto stretch text-primary-text font-sans overflow-y-auto px-4 pt-16"
+      class="flex flex-col w-full max-w-3xl h-[calc(100vh-12rem)] mx-auto stretch text-primary-text font-sans overflow-y-auto px-4 pt-4"
     >
-      <div class="py-24">
+      <div class="pt-8 pb-24">
         <div v-for="m in messages.slice(1)" :key="m.id" class="whitespace-pre-wrap mb-4">
           <span class="font-bold" :class="{ 'text-highlight': m.role !== 'user' }">{{
             m.role === "user" ? "You: " : "Intelligent Oracle Assistant: "
