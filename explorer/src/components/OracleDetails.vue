@@ -156,16 +156,17 @@
             <h4 class="text-md font-semibold mb-3">General Information</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded">
               <div>
-                <p class="text-sm"><span class="font-medium">Status:</span> {{ selectedTransactionObject.status }}</p>
-                <p class="text-sm"><span class="font-medium">Appealed:</span> {{ selectedTransactionObject.appealed ? 'Yes' : 'No' }}</p>
-                <p class="text-sm"><span class="font-medium">Created At:</span> {{ new Date(selectedTransactionObject.created_at).toLocaleString() }}</p>
+                <p class="text-sm mb-1"><span class="font-medium">Type:</span> {{ selectedTransactionObject.data?.contract_address ? "Deploy" : "Resolution" }}</p>
+                <p class="text-sm mb-1"><span class="font-medium">Status:</span> {{ selectedTransactionObject.status }}</p>
+                <p class="text-sm mb-1"><span class="font-medium">Appealed:</span> {{ selectedTransactionObject.appealed ? 'Yes' : 'No' }}</p>
+                <p class="text-sm mb-1"><span class="font-medium">Created At:</span> {{ new Date(selectedTransactionObject.created_at).toLocaleString() }}</p>
               </div>
               <div>
                 <p class="text-sm"><span class="font-medium">Calldata:</span></p>
                 <div class="bg-gray-100 p-2 rounded space-y-2">
                   <div v-if="decodedCalldata" class="text-sm">
                     <p><span class="font-medium">Method:</span> {{ decodedCalldata.method }}</p>
-                    <div class="mt-1">
+                    <div class="mt-1" v-if="decodedCalldata.args.length > 0">
                       <p><span class="font-medium">Arguments:</span></p>
                       <p>{{ decodedCalldata.args }}</p>
                     </div>
@@ -502,10 +503,13 @@ const decodedCalldata = computed(() => {
   try {
     // Split the string at 'method<' to separate args and method
     const parts = rawCalldata.split('method<');
-    console.log('🚀 ~ decodedCalldata ~ parts:', parts);
     
-    // Get args by removing the 'argsì' prefix
-    const args = parts[0] || ''
+    // Get args by removing the 'argsì' prefix and control characters
+    const args = parts[0]
+      .replace('args', '') // Remove the prefix
+      .replace('ì', '') // Remove the prefix
+      .replace(/[\x00-\x1F\x7F-\xFF]/g, '') // Remove all control characters
+      .trim();
     
     // Get method by removing the closing bracket if it exists
     const method = parts[1]?.replace('>', '') || 'Constructor';
