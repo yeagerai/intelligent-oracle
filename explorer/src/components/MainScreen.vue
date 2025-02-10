@@ -5,8 +5,14 @@
         <div class="py-6 sm:px-4">
           <h1 class="text-3xl font-bold text-primary-text">Intelligent Oracle Explorer</h1>
         </div>
-        <button @click="refreshOracles" class="mr-4 px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors">
-          Refresh
+        <button 
+          :disabled="genlayerStore.loading" 
+          @click="refreshOracles" 
+          class="mr-4 px-4 py-2 bg-highlight text-white rounded hover:opacity-80 transition-colors"
+          :class="{ 'opacity-50 cursor-not-allowed': genlayerStore.loading }"
+        >
+          <span v-if="genlayerStore.loading">Refreshing...</span> 
+          <span v-else>Refresh</span>
         </button>
       </div>
     </header>
@@ -62,8 +68,13 @@ import { onBeforeRouteUpdate } from 'vue-router';
 const genlayerStore = useGenlayerStore();
 const oracles = ref<Oracle[]>([]);
 
-onMounted(async () => {
-  loadOracles();
+onMounted(() => {
+  // First load from localStorage
+  const cachedOracles = localStorage.getItem("io-explorer.oracles");
+  if (cachedOracles) {
+    oracles.value = JSON.parse(cachedOracles);
+  }
+  // Then refresh from the network
   refreshOracles();
 });
 

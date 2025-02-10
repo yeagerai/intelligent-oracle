@@ -41,12 +41,7 @@ const links = computed<HeaderLink[]>(() => [
           <span v-if="link.isActive" class="text-primary-text font-bold">
             {{ link.label }}
           </span>
-          <a
-            v-else
-            :href="link.href"
-            target="_blank"
-            class="text-secondary-text hover:text-primary-text transition-colors"
-          >
+          <a v-else :href="link.href" class="text-secondary-text hover:text-primary-text transition-colors">
             {{ link.label }}
           </a>
         </template>
